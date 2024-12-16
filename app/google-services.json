@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "533728352951",
+    "project_id": "cashsfy",
+    "storage_bucket": "cashsfy.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:533728352951:android:14310e00206f16a4ae4b32",
+        "android_client_info": {
+          "package_name": "com.cashsify.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCK9yCi5zTpwDBDwMHkg31gKt6GJD-Yupc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

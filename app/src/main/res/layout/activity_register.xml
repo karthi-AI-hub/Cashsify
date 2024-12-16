@@ -1,0 +1,208 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="vertical"
+    android:gravity="center_horizontal"
+    android:background="@color/white"
+    android:padding="16dp">
+
+    <LinearLayout
+        style="?android:attr/buttonBarStyle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_marginTop="48dp">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnLogin"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="8dp"
+            android:layout_weight="1"
+            android:backgroundTint="@color/white"
+            android:contentDescription="Login Button"
+            android:text="Login"
+            android:textColor="@android:color/black"
+            app:cornerRadius="16dp" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnSignUp"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:layout_weight="1"
+            android:backgroundTint="@color/purple_500"
+            android:contentDescription="Sign Up Button"
+            android:text="Sign Up"
+            android:textColor="@android:color/white"
+            app:cornerRadius="16dp" />
+
+    </LinearLayout>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="REGISTER"
+        android:textSize="24sp"
+        android:textStyle="bold"
+        android:textColor="@color/black"
+        android:layout_marginTop="100dp" />
+
+    <EditText
+        android:id="@+id/phoneEditText"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:autofillHints="phone"
+        android:drawableStart="@drawable/icon_phone"
+        android:drawablePadding="20dp"
+        android:hint="Phone Number"
+        android:inputType="phone"
+        android:maxLength="35"
+        android:maxLines="1"
+        android:padding="12dp"
+        android:textColor="@color/black"
+        android:textColorHint="@color/gray" />
+
+    <EditText
+        android:id="@+id/emailEditText"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:autofillHints="emailAddress"
+        android:drawableStart="@drawable/baseline_mail_24"
+        android:drawablePadding="20dp"
+        android:hint="Email"
+        android:inputType="textEmailAddress"
+        android:maxLength="35"
+        android:maxLines="1"
+        android:padding="12dp"
+        android:textColor="@color/black"
+        android:textColorHint="@color/gray" />
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp">
+
+        <EditText
+            android:id="@+id/passwordEditText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Password"
+            android:autofillHints="password"
+            android:drawableStart="@drawable/baseline_lock_24"
+            android:textColor="@color/black"
+            android:textColorHint="@color/gray"
+            android:padding="12dp"
+            android:maxLength="15"
+            android:maxLines="1"
+            android:inputType="textPassword"
+            android:drawablePadding="20dp"/>
+
+        <ImageView
+            android:id="@+id/ivTogglePassword"
+            android:layout_width="28dp"
+            android:layout_height="28dp"
+            android:contentDescription="eye"
+            android:src="@drawable/ic_visibility"
+            android:layout_alignParentEnd="true"
+            android:layout_centerVertical="true"
+            android:layout_marginEnd="8dp"
+            android:clickable="true"
+            android:focusable="true"/>
+
+    </RelativeLayout>
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp">
+
+        <EditText
+            android:id="@+id/confirmpasswordEditText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Confirm Password"
+            android:autofillHints="password"
+            android:drawableStart="@drawable/baseline_lock_24"
+            android:textColor="@color/black"
+            android:textColorHint="@color/gray"
+            android:padding="12dp"
+            android:maxLength="15"
+            android:maxLines="1"
+            android:inputType="textPassword"
+            android:drawablePadding="20dp"/>
+
+        <ImageView
+            android:id="@+id/ivTogglePassword2"
+            android:layout_width="28dp"
+            android:layout_height="28dp"
+            android:contentDescription="eye"
+            android:src="@drawable/ic_visibility"
+            android:layout_alignParentEnd="true"
+            android:layout_centerVertical="true"
+            android:layout_marginEnd="8dp"
+            android:clickable="true"
+            android:focusable="true"/>
+
+    </RelativeLayout>
+<!--    <CheckBox-->
+<!--        android:id="@+id/checkbox_terms"-->
+<!--        android:layout_width="wrap_content"-->
+<!--        android:layout_height="wrap_content"-->
+<!--        android:layout_marginTop="16dp"-->
+<!--        android:textSize="14sp"-->
+<!--        android:textColor="@color/black"-->
+<!--        android:textColorLink="@color/purple_500"-->
+<!--        android:paddingStart="25dp"-->
+<!--        android:checked="true"-->
+<!--        android:text="I agree to the Terms and Conditions and Privacy Policy"-->
+<!--        android:clickable="true"-->
+<!--        android:linksClickable="true" />-->
+<!--    -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:textSize="14sp"
+        android:textColor="@color/black"
+        android:paddingStart="25dp"
+        android:text="By Clicking Register you agree to the Terms and Conditions and Privacy Policy of Cashsify"/>
+
+    <Button
+        android:id="@+id/registerButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Register"
+        android:backgroundTint="@color/purple_200"
+        android:textColor="@android:color/white"
+        android:layout_marginTop="16dp" />
+
+    <TextView
+        android:id="@+id/loginPrompt"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Already have an account? Login"
+        android:clickable="true"
+        android:focusable="true"
+        android:textColor="@color/blue_600"
+        android:textSize="14sp"
+        android:layout_marginTop="24dp" />
+
+    <ProgressBar
+        android:id="@+id/regProgressBar"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:max="100"
+        android:progress="0"
+        android:layout_marginTop="10dp"
+        android:visibility="gone"
+        android:indeterminate="false"
+        android:progressTint="@android:color/white"
+        android:theme="@style/CustomProgressBar"
+        android:layout_gravity="center" />
+
+</LinearLayout>
