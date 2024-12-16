@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Background color -->
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="#FFFFFF" />
+        </shape>
+    </item>
+
+    <!-- Curved Wave with Radial Gradient -->
+    <item android:top="100dp">
+        <shape android:shape="rectangle">
+            <gradient
+                android:angle="135"
+                android:centerColor="#009688"
+                android:endColor="#00695C"
+                android:startColor="#4DB6AC"
+            android:type="radial"
+            android:gradientRadius="400dp"
+            android:centerX="0.5"
+            android:centerY="0"
+            />
+            <corners android:topLeftRadius="80dp" android:topRightRadius="0dp" />
+        </shape>
+    </item>
+
+</layer-list>

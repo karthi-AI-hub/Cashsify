@@ -75,11 +75,9 @@ public class Utils {
     public static void setError(EditText et, String str){
         et.setError(str);
         et.requestFocus();
-        et.setBackgroundResource(R.drawable.edit_text_red);
     }
 
     public static void resetError(EditText et){
-        et.setBackgroundResource(R.drawable.edittext_background);
         et.setError(null);
     }
 

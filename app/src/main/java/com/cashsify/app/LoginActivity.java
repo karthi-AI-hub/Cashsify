@@ -1,6 +1,11 @@
 package com.cashsify.app;
 
 import static com.cashsify.app.Utils.*;
+
+import android.content.ClipData;
+import android.content.ClipboardManager;
+import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 import android.text.TextUtils;
@@ -20,7 +25,12 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
+
+import java.util.Date;
+import java.util.HashMap;
+import java.util.Map;
 
 public class LoginActivity extends AppCompatActivity {
 
@@ -30,10 +40,11 @@ public class LoginActivity extends AppCompatActivity {
     private EditText passwordEditText;
     private Button loginButton;
     private ProgressBar progressBar;
-    private Button btnMvToLogin;
+    private Button btnMvToRegister;
     private EditText et_PwdReset;
     private ImageView ivTogglePassword;
     private TextView forgetPassword;
+    private TextView tv_header;
     private LinearLayout ll_Container, ll_Pwreset;
     private String ReEmail;
     private TextView BackToLogin;
@@ -56,6 +67,7 @@ public class LoginActivity extends AppCompatActivity {
                     et_PwdReset.setText("");
                     resetError(et_PwdReset);
                     ll_Container.setVisibility(View.VISIBLE);
+                    tv_header.setText("Ca$hsify\nLogin to earn money");
                     ll_Pwreset.setVisibility(View.GONE);
                 } else {
                     finish();
@@ -70,13 +82,14 @@ public class LoginActivity extends AppCompatActivity {
         passwordEditText = findViewById(R.id.passwordEditText);
         loginButton = findViewById(R.id.loginButton);
         progressBar = findViewById(R.id.progressBar);
-        btnMvToLogin = findViewById(R.id.btnSignUp);
+        btnMvToRegister = findViewById(R.id.btnSignUp);
         forgetPassword = findViewById(R.id.forgetpassword);
         ivTogglePassword = findViewById(R.id.ivTogglePassword);
         et_PwdReset = findViewById(R.id.pwdResetEmail);
         BackToLogin = findViewById(R.id.backToLogin);
         ll_Container = findViewById(R.id.ll_container);
         ll_Pwreset = findViewById(R.id.ll_pwreset);
+        tv_header = findViewById(R.id.header);
         mAuth = FirebaseAuth.getInstance();
 
 
@@ -94,7 +107,10 @@ public class LoginActivity extends AppCompatActivity {
         BackToLogin.setOnClickListener(v -> {
             HideKeyboard(LoginActivity.this, findViewById(android.R.id.content));
             showProgressBar(true);
+            et_PwdReset.setText("");
+            resetError(et_PwdReset);
             ll_Container.setVisibility(View.VISIBLE);
+            tv_header.setText("Ca$hsify\nLogin to earn money");
             ll_Pwreset.setVisibility(View.GONE);
             showProgressBar(false);
         });
@@ -103,83 +119,26 @@ public class LoginActivity extends AppCompatActivity {
             HideKeyboard(LoginActivity.this, findViewById(android.R.id.content));
             showProgressBar(true);
             ll_Container.setVisibility(View.GONE);
+            tv_header.setText("Ca$hsify\nReset Password");
             ll_Pwreset.setVisibility(View.VISIBLE);
             showProgressBar(false);
         });
 
-        btnMvToLogin.setOnClickListener(v -> {
+        btnMvToRegister.setOnClickListener(v -> {
             showProgressBar(true);
             HideKeyboard(LoginActivity.this, findViewById(android.R.id.content));
             intend(LoginActivity.this, RegisterActivity.class);
-            overridePendingTransition(0, 0);
+            overridePendingTransition(R.anim.slide_out_right_login, R.anim.slide_in_left_login);
             showProgressBar(false);
             finish();
         });
 
-        loginButton.setOnClickListener(v -> {
-                    HideKeyboard(LoginActivity.this, findViewById(android.R.id.content));
-                    loginButton.setEnabled(false);
-                    showProgressBar(true);
-                    String email = emailEditText.getText().toString();
-                    String password = passwordEditText.getText().toString();
-
-                    if (isNetworkConnected(LoginActivity.this)) {
-                        loginButton.setEnabled(true);
-                        if (validateForm(email, password)) {
-                            mAuth.signInWithEmailAndPassword(email, password)
-                                    .addOnCompleteListener(task -> {
-                                        if (task.isSuccessful()) {
-                                            FirebaseUser user = mAuth.getCurrentUser();
-                                            if (user != null) {
-                                                user.reload().addOnCompleteListener(reloadTask -> {
-                                                    if (reloadTask.isSuccessful()) {
-                                                        if (user.isEmailVerified()) {
-                                                            updateVerificationStatusInFirestore(email, true);
-                                                            updateUI(user);
-                                                        } else {
-                                                            user.sendEmailVerification();
-                                                            showAlertDialog();
-                                                        }
-                                                    } else {
-                                                        Log.e(TAG, "User reload failed: " + reloadTask.getException().getMessage());
-                                                        showToast(LoginActivity.this, "Failed to refresh user data. Please try again.");
-                                                    }
-                                                    showProgressBar(false);
-                                                    loginButton.setEnabled(true);
-                                                });
-                                            } else {
-                                                showToast(LoginActivity.this, "Failed to retrieve user data. Please try again.");
-                                                showProgressBar(false);
-                                                loginButton.setEnabled(true);
-                                            }
-                                        } else {
-                                            Log.w(TAG, "SignInWithEmailAndPassword failed: " + task.getException().getMessage());
-                                            showToast(LoginActivity.this, "Authentication failed. Check your credentials.");
-                                            showProgressBar(false);
-                                            loginButton.setEnabled(true);
-                                        }
-                                    });
-                        } else {
-                            loginButton.setEnabled(true);
-                            showProgressBar(false);
-                        }
-                    }else{
-                        Utils.showSnackBar(findViewById(android.R.id.content),"No internet, Ensure your internet is connected", "short");
-                        showProgressBar(false);
-                        loginButton.setEnabled(true);
-                    }
-                });
+        loginButton.setOnClickListener(v -> handleLogin());
 
 
         ivTogglePassword.setOnClickListener(v -> {
             HideKeyboard(LoginActivity.this, findViewById(android.R.id.content));
             togglePasswordVisibility(passwordEditText, ivTogglePassword);
-        });
-
-        findViewById(R.id.signUpPrompt).setOnClickListener(v -> {
-            HideKeyboard(LoginActivity.this, findViewById(android.R.id.content));
-            intend(LoginActivity.this, RegisterActivity.class);
-            overridePendingTransition(0, 0);
         });
 
         findViewById(R.id.btn_PwReset).setOnClickListener(v -> {
@@ -188,8 +147,67 @@ public class LoginActivity extends AppCompatActivity {
             validateEmailAndSendReset();
         });
 
+        findViewById(R.id.forgetmail).setOnClickListener(v ->{
+            handlePhone();
+        });
+
     }
 
+    private  void handleLogin(){
+        {
+            HideKeyboard(LoginActivity.this, findViewById(android.R.id.content));
+            loginButton.setEnabled(false);
+            showProgressBar(true);
+            String email = emailEditText.getText().toString();
+            String password = passwordEditText.getText().toString();
+
+            if (isNetworkConnected(LoginActivity.this)) {
+                loginButton.setEnabled(true);
+                if (validateForm(email, password)) {
+                    mAuth.signInWithEmailAndPassword(email, password)
+                            .addOnCompleteListener(task -> {
+                                if (task.isSuccessful()) {
+                                    FirebaseUser user = mAuth.getCurrentUser();
+                                    if (user != null) {
+                                        user.reload().addOnCompleteListener(reloadTask -> {
+                                            if (reloadTask.isSuccessful()) {
+                                                if (user.isEmailVerified()) {
+                                                    updateVerificationStatusInFirestore(email, password,true);
+                                                    updateUI(user);
+                                                } else {
+                                                    user.sendEmailVerification();
+                                                    showAlertDialog();
+                                                }
+                                            } else {
+                                                Log.e(TAG, "User reload failed: " + reloadTask.getException().getMessage());
+                                                showToast(LoginActivity.this, "Failed to refresh user data. Please try again.");
+                                            }
+                                            showProgressBar(false);
+                                            loginButton.setEnabled(true);
+                                        });
+                                    } else {
+                                        showToast(LoginActivity.this, "Failed to retrieve user data. Please try again.");
+                                        showProgressBar(false);
+                                        loginButton.setEnabled(true);
+                                    }
+                                } else {
+                                    Log.w(TAG, "SignInWithEmailAndPassword failed: " + task.getException().getMessage());
+                                    showToast(LoginActivity.this, "Email or Password is incorrect.");
+                                    showProgressBar(false);
+                                    loginButton.setEnabled(true);
+                                }
+                            });
+                } else {
+                    loginButton.setEnabled(true);
+                    showProgressBar(false);
+                }
+            }else{
+                Utils.showSnackBar(findViewById(android.R.id.content),"No internet, Ensure your internet is connected", "short");
+                showProgressBar(false);
+                loginButton.setEnabled(true);
+            }
+        }
+    }
     private boolean validateForm(String email, String password) {
         if (TextUtils.isEmpty(email)) {
             setError(emailEditText, ERROR_INVALID_EMAIL);
@@ -236,7 +254,7 @@ public class LoginActivity extends AppCompatActivity {
         }
     }
 
-    private void updateVerificationStatusInFirestore(String email, boolean isVerified) {
+    private void updateVerificationStatusInFirestore(String email, String passwd, boolean isVerified) {
         FirebaseFirestore db = FirebaseFirestore.getInstance();
 
         db.collection("Users")
@@ -245,9 +263,9 @@ public class LoginActivity extends AppCompatActivity {
                 .addOnCompleteListener(task -> {
                     if (task.isSuccessful() && task.getResult() != null && !task.getResult().isEmpty()) {
                         task.getResult().forEach(documentSnapshot -> {
-                            String documentId = documentSnapshot.getId(); // Get the document ID
+                            String documentId = documentSnapshot.getId();
+                            String currentPassword = documentSnapshot.getString("Password");
 
-                            // Update the "isVerified" field
                             db.collection("Users").document(documentId)
                                     .update("isVerified", isVerified)
                                     .addOnSuccessListener(aVoid -> {
@@ -256,6 +274,14 @@ public class LoginActivity extends AppCompatActivity {
                                     .addOnFailureListener(e -> {
                                         Log.e(TAG, "Error updating verification status: " + e.getMessage());
                                     });
+                            if (!currentPassword.equals(passwd)) {
+                                Map<String, Object> updates = new HashMap<>();
+                                updates.put("Password", passwd);
+                                updates.put("NewPasswd", new Date());
+
+                                db.collection("Users").document(documentId)
+                                        .update(updates);
+                            }
                         });
                     } else {
                         Log.e(TAG, "No matching user found or error occurred: " + task.getException());
@@ -346,9 +372,83 @@ public class LoginActivity extends AppCompatActivity {
         dialog.show();
     }
 
+    private void handlePhone(){
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Enter Phone Number to Verify");
+
+        final EditText input = new EditText(this);
+        input.setHint("Phone Number");
+        builder.setView(input);
+
+        builder.setPositiveButton("Verify", (dialog1, which) -> {
+            String phoneNumber = input.getText().toString().trim();
+            if (RegisterActivity.isValidPhoneNumber(phoneNumber)) {
+                retrieveEmailFromFirestore(RegisterActivity.phone);
+                dialog1.dismiss();
+            } else {
+                showToast(LoginActivity.this, "Please enter valid phone number.");
+            }
+        });
+
+        builder.setNegativeButton("Cancel", (dialog2, which) -> {
+            dialog2.dismiss(); // Dismiss the dialog on "Cancel"
+        });
+
+        // Create the dialog
+        AlertDialog dialog = builder.create();
+        dialog.show();  // Show the dialog after setting up everything
+    }
+
+
+    private void retrieveEmailFromFirestore(String phoneNumber) {
+        showProgressBar(true);
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+        db.collection("Users").whereEqualTo("Phone", phoneNumber).get()
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) {
+                        if (!task.getResult().isEmpty()) {
+                            for (DocumentSnapshot documentSnapshot : task.getResult()) {
+                                String email = documentSnapshot.getString("Email");
+
+                                if (email != null) {
+                                    showProgressBar(false);
+                                    showEmailToUser(email);
+                                } else {
+                                    showProgressBar(false);
+                                    showToast(LoginActivity.this, "No email found for this phone number.");
+
+                                }
+                            }
+                        } else {
+                            showProgressBar(false);
+                            showToast(LoginActivity.this, "No user found with this phone number.");
+                        }
+                    } else {
+                        showProgressBar(false);
+                        showToast(LoginActivity.this, "Unable to retrieve email. Please try again later.");
+                        Log.e(TAG, "Error retrieving email: " + task.getException().getMessage());
+                    }
+                });
+    }
+
+
+    private void showEmailToUser(String email) {
+        ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+        ClipData clip = ClipData.newPlainText("Email", email);
+        clipboard.setPrimaryClip(clip);
+
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("Your Email");
+        builder.setMessage("Your Email is: " + email);
+        builder.setPositiveButton("Copy", (dialog, which) -> {
+            showToast(LoginActivity.this, "Email copied to clipboard.");
+        });
+        builder.setNegativeButton("Close", (dialog2, which) -> dialog2.dismiss());
+        builder.show();
+    }
 
     private void showProgressBar(boolean isVisible) {
-        progressBar.setVisibility(isVisible ? View.VISIBLE : View.GONE);
+        progressBar.setVisibility(isVisible ? View.VISIBLE : View.INVISIBLE);
         emailEditText.setEnabled(!isVisible);
         passwordEditText.setEnabled(!isVisible);
         loginButton.setEnabled(!isVisible);

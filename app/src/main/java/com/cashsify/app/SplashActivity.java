@@ -20,10 +20,13 @@ public class SplashActivity extends AppCompatActivity {
         setContentView(R.layout.activity_splash);
 
         FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
-        if (currentUser != null) {
+        if (currentUser != null && currentUser.isEmailVerified()) {
             Utils.intend(SplashActivity.this, MainActivity.class);
             finish();
-        }else{
+        } else if (currentUser != null && !currentUser.isEmailVerified()) {
+            Utils.intend(SplashActivity.this, LoginActivity.class);
+            finish();
+        } else{
             Utils.intend(SplashActivity.this, RegisterActivity.class);
             finish();
 

@@ -4,16 +4,44 @@
     android:layout_height="match_parent"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:orientation="vertical"
-    android:gravity="center_horizontal"
-    android:background="@color/white"
-    android:padding="16dp">
+    android:background="@drawable/curve_top_register">
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+        <TextView
+            android:id="@+id/Header"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Ca$hsify\nEarn by Ads"
+            android:textAlignment="center"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            android:textColor="@color/black"
+            android:layout_centerHorizontal="true"
+        android:layout_marginTop="40dp" />
+    </RelativeLayout>
+
+    <ImageView
+        android:layout_width="30dp"
+        android:layout_height="30dp"
+        android:layout_marginStart="150dp"
+        android:src="@drawable/coins"/>
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:layout_gravity="center"
+        android:gravity="center"
+        android:layout_marginTop="0dp"
+        android:padding="16dp">
 
     <LinearLayout
         style="?android:attr/buttonBarStyle"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:layout_marginTop="48dp">
+        android:orientation="horizontal">
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/btnLogin"
@@ -33,7 +61,7 @@
             android:layout_height="wrap_content"
             android:layout_marginStart="8dp"
             android:layout_weight="1"
-            android:backgroundTint="@color/purple_500"
+            android:backgroundTint="@color/light_violet"
             android:contentDescription="Sign Up Button"
             android:text="Sign Up"
             android:textColor="@android:color/white"
@@ -41,6 +69,13 @@
 
     </LinearLayout>
 
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="80dp"
+            android:text="$"
+            android:textColor="@color/teal_700"
+            android:textSize="20sp" />
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -48,29 +83,34 @@
         android:textSize="24sp"
         android:textStyle="bold"
         android:textColor="@color/black"
-        android:layout_marginTop="100dp" />
+        android:layout_gravity="center"/>
 
-    <EditText
+        <ImageView
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:layout_marginStart="85dp"
+            android:src="@drawable/icon_rupee"
+            app:tint="@color/teal_700" />
+
+        <EditText
         android:id="@+id/phoneEditText"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
         android:autofillHints="phone"
         android:drawableStart="@drawable/icon_phone"
         android:drawablePadding="20dp"
         android:hint="Phone Number"
         android:inputType="phone"
-        android:maxLength="35"
+        android:maxLength="13"
         android:maxLines="1"
         android:padding="12dp"
-        android:textColor="@color/black"
-        android:textColorHint="@color/gray" />
+        android:textColor="@color/white"
+        android:textColorHint="@color/lightGray" />
 
-    <EditText
+        <EditText
         android:id="@+id/emailEditText"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
         android:autofillHints="emailAddress"
         android:drawableStart="@drawable/baseline_mail_24"
         android:drawablePadding="20dp"
@@ -78,14 +118,15 @@
         android:inputType="textEmailAddress"
         android:maxLength="35"
         android:maxLines="1"
+            android:layout_marginTop="10dp"
         android:padding="12dp"
-        android:textColor="@color/black"
-        android:textColorHint="@color/gray" />
+        android:textColor="@color/white"
+        android:textColorHint="@color/lightGray" />
 
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="16dp">
+        android:layout_marginTop="10dp">
 
         <EditText
             android:id="@+id/passwordEditText"
@@ -94,8 +135,8 @@
             android:hint="Password"
             android:autofillHints="password"
             android:drawableStart="@drawable/baseline_lock_24"
-            android:textColor="@color/black"
-            android:textColorHint="@color/gray"
+            android:textColor="@color/white"
+            android:textColorHint="@color/lightGray"
             android:padding="12dp"
             android:maxLength="15"
             android:maxLines="1"
@@ -107,7 +148,7 @@
             android:layout_width="28dp"
             android:layout_height="28dp"
             android:contentDescription="eye"
-            android:src="@drawable/ic_visibility"
+            android:src="@drawable/ic_visibility_off"
             android:layout_alignParentEnd="true"
             android:layout_centerVertical="true"
             android:layout_marginEnd="8dp"
@@ -128,8 +169,8 @@
             android:hint="Confirm Password"
             android:autofillHints="password"
             android:drawableStart="@drawable/baseline_lock_24"
-            android:textColor="@color/black"
-            android:textColorHint="@color/gray"
+            android:textColor="@color/white"
+            android:textColorHint="@color/lightGray"
             android:padding="12dp"
             android:maxLength="15"
             android:maxLines="1"
@@ -141,7 +182,7 @@
             android:layout_width="28dp"
             android:layout_height="28dp"
             android:contentDescription="eye"
-            android:src="@drawable/ic_visibility"
+            android:src="@drawable/ic_visibility_off"
             android:layout_alignParentEnd="true"
             android:layout_centerVertical="true"
             android:layout_marginEnd="8dp"
@@ -163,25 +204,33 @@
 <!--        android:clickable="true"-->
 <!--        android:linksClickable="true" />-->
 <!--    -->
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        android:textSize="14sp"
-        android:textColor="@color/black"
-        android:paddingStart="25dp"
-        android:text="By Clicking Register you agree to the Terms and Conditions and Privacy Policy of Cashsify"/>
 
     <Button
         android:id="@+id/registerButton"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Register"
-        android:backgroundTint="@color/purple_200"
+        android:backgroundTint="@color/orange"
         android:textColor="@android:color/white"
         android:layout_marginTop="16dp" />
 
-    <TextView
+        <ImageView
+            android:layout_width="25dp"
+            android:layout_height="25dp"
+            android:layout_alignParentStart="true"
+            android:layout_marginStart="100dp"
+            android:contentDescription="Gold Coin"
+            android:src="@drawable/coins" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:paddingStart="25dp"
+            android:text="By Clicking Register you agree to the Terms and Conditions and Privacy Policy of Cashsify"
+            android:textColor="@color/black"
+            android:textSize="14sp" />
+
+        <TextView
         android:id="@+id/loginPrompt"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -190,7 +239,8 @@
         android:focusable="true"
         android:textColor="@color/blue_600"
         android:textSize="14sp"
-        android:layout_marginTop="24dp" />
+        android:layout_marginTop="24dp"
+        android:visibility="gone"/>
 
     <ProgressBar
         android:id="@+id/regProgressBar"
@@ -199,10 +249,62 @@
         android:max="100"
         android:progress="0"
         android:layout_marginTop="10dp"
-        android:visibility="gone"
+        android:visibility="invisible"
         android:indeterminate="false"
         android:progressTint="@android:color/white"
         android:theme="@style/CustomProgressBar"
         android:layout_gravity="center" />
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_alignParentBottom="true"
+            android:padding="16dp">
 
+            <ImageView
+                android:layout_width="30dp"
+                android:layout_height="30dp"
+                android:src="@drawable/icon_rupee"
+                android:layout_alignParentStart="true"
+                android:layout_marginStart="30dp"
+                app:tint="@color/teal_700"
+                />
+            <ImageView
+                android:layout_width="45dp"
+                android:layout_height="45dp"
+                android:src="@drawable/ads"
+                android:layout_centerHorizontal="true"/>
+
+            <ImageView
+                android:layout_width="45dp"
+                android:layout_height="45dp"
+                android:layout_alignParentEnd="true"
+                android:layout_marginEnd="46dp"
+                android:layout_marginBottom="10dp"
+                android:src="@drawable/icon_rupee"
+                app:tint="@color/teal_700" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentEnd="true"
+                android:layout_alignParentBottom="true"
+                android:layout_marginBottom="0dp"
+                android:layout_marginEnd="120dp"
+                android:text="$"
+                android:textColor="@color/teal_700"
+                android:textSize="20sp" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentEnd="true"
+                android:layout_alignParentBottom="true"
+                android:layout_marginEnd="32dp"
+                android:layout_marginBottom="22dp"
+                android:text="$"
+                android:textColor="@color/teal_700"
+                android:textSize="30sp" />
+
+        </RelativeLayout>
+    </LinearLayout>
 </LinearLayout>

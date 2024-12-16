@@ -15,7 +15,6 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
-import android.widget.TextView;
 
 
 import androidx.activity.EdgeToEdge;
@@ -28,8 +27,6 @@ import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FirebaseFirestore;
 
-import java.sql.Array;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import android.content.SharedPreferences;
@@ -46,9 +43,8 @@ public class RegisterActivity extends AppCompatActivity {
     private ProgressBar progressBar;
     private Button btnMoveToLogin;
     private ImageView ivTogglePassword, ivTogglePassword2;
-    private TextView tvPrompt;
     private SharedPreferences sharedPref;
-    private String phone;
+    public static String phone;
 
 
 
@@ -72,7 +68,6 @@ public class RegisterActivity extends AppCompatActivity {
         btnMoveToLogin = findViewById(R.id.btnLogin);
         ivTogglePassword = findViewById(R.id.ivTogglePassword);
         ivTogglePassword2 = findViewById(R.id.ivTogglePassword2);
-        tvPrompt = findViewById(R.id.loginPrompt);
         mAuth = FirebaseAuth.getInstance();
 
         if (!Utils.isNetworkConnected(RegisterActivity.this)) {
@@ -90,14 +85,14 @@ public class RegisterActivity extends AppCompatActivity {
             HideKeyboard(RegisterActivity.this, findViewById(android.R.id.content));
             progressBar.setVisibility(View.VISIBLE);
             intend(RegisterActivity.this, LoginActivity.class);
-            overridePendingTransition(0, 0);
-            progressBar.setVisibility(View.GONE);
+            overridePendingTransition(R.anim.slide_in_right_register, R.anim.slide_out_left_register);
+            progressBar.setVisibility(View.INVISIBLE);
             finish();
         };
         btnMoveToLogin.setOnClickListener(loginClickListener);
-        tvPrompt.setOnClickListener(loginClickListener);
 
         registerButton.setOnClickListener(v -> {
+            Utils.HideKeyboard(RegisterActivity.this, findViewById(android.R.id.content));
             resetErrors();
             if (Utils.isNetworkConnected(RegisterActivity.this)) {
                 registerButton.setEnabled(true);
@@ -110,15 +105,15 @@ public class RegisterActivity extends AppCompatActivity {
 
                 if (validateForm(phone, email, password, confirmPassword)) {
                     checkIfExistingPhone(phone, phoneExists -> {
-                        progressBar.setVisibility(View.GONE);
+                        progressBar.setVisibility(View.INVISIBLE);
                         if (!phoneExists) {
                             createAccount(email, password);
                             registerButton.setEnabled(false);
 
                         } else {
                             phoneEditText.setError("Phone number already enrolled.");
+                            phoneEditText.getText().clear();
                             showToast(RegisterActivity.this, "Phone number already enrolled.");
-                            phoneEditText.setBackgroundResource(R.drawable.edit_text_red);
                             registerButton.setEnabled(true);
                         }
                     });
@@ -146,37 +141,31 @@ public class RegisterActivity extends AppCompatActivity {
 
         if(phone.isEmpty() || !isValidPhoneNumber(phone) || !Patterns.PHONE.matcher(phone).matches()){
             phoneEditText.setError("Enter Valid Phone No");
-            phoneEditText.setBackgroundResource(R.drawable.edit_text_red);
             phoneEditText.requestFocus();
-            progressBar.setVisibility(View.GONE);
+            progressBar.setVisibility(View.INVISIBLE);
             return false;
         }else if (TextUtils.isEmpty(email) || !Patterns.EMAIL_ADDRESS.matcher(email).matches()) {
             emailEditText.setError("Enter Valid Email address.");
-            emailEditText.setBackgroundResource(R.drawable.edit_text_red);
             emailEditText.requestFocus();
-            progressBar.setVisibility(View.GONE);
+            progressBar.setVisibility(View.INVISIBLE);
             return false;
         } else if (TextUtils.isEmpty(password)) {
             passwordEditText.setError("Required.");
-            passwordEditText.setBackgroundResource(R.drawable.edit_text_red);
             passwordEditText.requestFocus();
-            progressBar.setVisibility(View.GONE);
+            progressBar.setVisibility(View.INVISIBLE);
             return false;
         } else if (password.length() < 6) {
             passwordEditText.setError("Password should be at least 6 characters.");
-            passwordEditText.setBackgroundResource(R.drawable.edit_text_red);
             passwordEditText.requestFocus();
-            progressBar.setVisibility(View.GONE);
+            progressBar.setVisibility(View.INVISIBLE);
             return false;
         } else if (!password.equals(confirmPassword)) {
             confirmPasswordEditText.setError("Passwords do not match.");
-            passwordEditText.setBackgroundResource(R.drawable.edit_text_red);
             confirmPasswordEditText.requestFocus();
-            confirmPasswordEditText.setBackgroundResource(R.drawable.edit_text_red);
-            progressBar.setVisibility(View.GONE);
+            progressBar.setVisibility(View.INVISIBLE);
             return false;
         } else {
-            progressBar.setVisibility(View.GONE);
+            progressBar.setVisibility(View.INVISIBLE);
             resetErrors();
             return true;
         }
@@ -188,8 +177,8 @@ public class RegisterActivity extends AppCompatActivity {
                 .addOnCompleteListener(this, task -> {
                     if (task.isSuccessful()) {
                         Log.d(TAG, "createUserWithEmail:success");
-                        progressBar.setVisibility(View.GONE);
-                        saveUserData(phoneEditText.getText().toString(),email,password);
+                        progressBar.setVisibility(View.INVISIBLE);
+                        saveUserData(phone,email,password);
                         FirebaseUser user = mAuth.getCurrentUser();
                         if (user != null) {
                             user.sendEmailVerification();
@@ -208,7 +197,7 @@ public class RegisterActivity extends AppCompatActivity {
         }else{
         clearInputFields();
         }
-        progressBar.setVisibility(View.GONE);
+        progressBar.setVisibility(View.INVISIBLE);
     }
 
     private void handleError(Exception exception) {
@@ -221,7 +210,7 @@ public class RegisterActivity extends AppCompatActivity {
             Log.e(TAG, "Authentication failed: ", exception);
             showToast(this, "Authentication failed.");
         }
-        progressBar.setVisibility(View.GONE);
+        progressBar.setVisibility(View.INVISIBLE);
         updateUI(null);
     }
 
@@ -236,7 +225,7 @@ public class RegisterActivity extends AppCompatActivity {
         db.collection("Users").document(phone.toUpperCase())
                 .set(userData)
                 .addOnSuccessListener(aVoid -> {
-                    progressBar.setVisibility(View.GONE);
+                    progressBar.setVisibility(View.INVISIBLE);
                     showSnackBar(findViewById(android.R.id.content),"Registration successful","short");
                     clearInputFields();
                     SharedPreferences.Editor editor = sharedPref.edit();
@@ -244,7 +233,7 @@ public class RegisterActivity extends AppCompatActivity {
                     editor.apply();
                 })
                 .addOnFailureListener(e ->{
-                    progressBar.setVisibility(View.GONE);
+                    progressBar.setVisibility(View.INVISIBLE);
                 showSnackBar(findViewById(android.R.id.content),"Registration Failed","short");
                 });
     }
@@ -276,7 +265,7 @@ public class RegisterActivity extends AppCompatActivity {
         void onCheckComplete(boolean phoneExists);
     }
 
-    private boolean isValidPhoneNumber(String phoneNo) {
+    public static boolean isValidPhoneNumber(String phoneNo) {
         if (phoneNo.startsWith("+91")) {
             phone = phoneNo.substring(3);
             return phoneNo.length() == 13
