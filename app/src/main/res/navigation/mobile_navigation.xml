@@ -8,14 +8,14 @@
     <fragment
         android:id="@+id/nav_home"
         android:name="com.cashsify.app.ui.home.HomeFragment"
-        android:label="@string/menu_home"
+        android:label="Dashboard"
         tools:layout="@layout/fragment_home" />
 
     <fragment
-        android:id="@+id/nav_gallery"
-        android:name="com.cashsify.app.ui.gallery.GalleryFragment"
-        android:label="@string/menu_gallery"
-        tools:layout="@layout/fragment_gallery" />
+        android:id="@+id/nav_ads"
+        android:name="com.cashsify.app.ui.gallery.AdsFragment"
+        android:label="Watch Ads"
+        tools:layout="@layout/fragment_ads" />
 
     <fragment
         android:id="@+id/nav_slideshow"

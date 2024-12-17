@@ -415,13 +415,13 @@ public class LoginActivity extends AppCompatActivity {
                                     showEmailToUser(email);
                                 } else {
                                     showProgressBar(false);
-                                    showToast(LoginActivity.this, "No email found for this phone number.");
+                                    showToast(LoginActivity.this, "No email found for this phone number 1.");
 
                                 }
                             }
                         } else {
                             showProgressBar(false);
-                            showToast(LoginActivity.this, "No user found with this phone number.");
+                            showToast(LoginActivity.this, "No user found with this phone number 2.");
                         }
                     } else {
                         showProgressBar(false);
@@ -438,8 +438,8 @@ public class LoginActivity extends AppCompatActivity {
         clipboard.setPrimaryClip(clip);
 
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle("Your Email");
-        builder.setMessage("Your Email is: " + email);
+        builder.setTitle("Your Email is :");
+        builder.setMessage(email);
         builder.setPositiveButton("Copy", (dialog, which) -> {
             showToast(LoginActivity.this, "Email copied to clipboard.");
         });

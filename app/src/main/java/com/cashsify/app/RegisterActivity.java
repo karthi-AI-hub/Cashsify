@@ -272,6 +272,7 @@ public class RegisterActivity extends AppCompatActivity {
                     && (phoneNo.charAt(3) == '9' || phoneNo.charAt(3) == '8' || phoneNo.charAt(3) == '7' || phoneNo.charAt(3) == '6')
                     && TextUtils.isDigitsOnly(phoneNo.substring(1));
         } else if (phoneNo.startsWith("9") || phoneNo.startsWith("8") || phoneNo.startsWith("7") || phoneNo.startsWith("6")) {
+            phone = phoneNo;
             return phoneNo.length() == 10 && TextUtils.isDigitsOnly(phoneNo);
         } else {
             return false;
