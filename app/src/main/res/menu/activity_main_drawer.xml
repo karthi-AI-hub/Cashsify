@@ -9,13 +9,29 @@
             android:icon="@drawable/icon_dashboard"
             android:title="Dashboard"/>
         <item
+            android:id="@+id/nav_profile"
+            android:icon="@drawable/icon_person"
+            android:title="Profile" />
+        <item
             android:id="@+id/nav_ads"
-            android:icon="@drawable/ic_menu_gallery"
+            android:icon="@drawable/icon_watchads"
             android:title="Watch Ads" />
         <item
-            android:id="@+id/nav_slideshow"
-            android:icon="@drawable/ic_menu_slideshow"
-            android:title="@string/menu_slideshow" />
+            android:id="@+id/nav_withdraw"
+            android:icon="@drawable/icon_bank"
+            android:title="Withdraw" />
+        <item
+            android:id="@+id/nav_refer"
+            android:icon="@drawable/icon_refer"
+            android:title="Refer Friend" />
+        <item
+            android:id="@+id/nav_help"
+            android:icon="@drawable/icon_help"
+            android:title="Need Help" />
+        <item
+            android:id="@+id/nav_aboutUs"
+            android:icon="@drawable/icon_info"
+            android:title="About Us" />
         <item
             android:id="@+id/nav_logout"
             android:icon="@drawable/ic_menu_logout"

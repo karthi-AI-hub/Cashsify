@@ -1,19 +1,25 @@
 package com.cashsify.app;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.net.ConnectivityManager;
 import android.net.NetworkCapabilities;
 import android.net.NetworkInfo;
+import android.text.TextUtils;
 import android.text.method.PasswordTransformationMethod;
+import android.util.Log;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.ImageView;
 
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.android.material.snackbar.Snackbar;
+import com.google.firebase.firestore.FirebaseFirestore;
 
 public class Utils {
 
@@ -21,6 +27,10 @@ public class Utils {
     public static final String ERROR_INVALID_EMAIL = "Invalid Email Address";
     public static final String ERROR_INVALID_PHONE = "Invalid Phone Number";
     public static final String ERROR_INVALID_PASSWORD = "Invalid Password";
+    private static String documentId;
+    private static String userEmail;
+    private static String userName;
+    private static FirebaseFirestore db;
 
     public static void intend(Context context, Class<?> cls) {
         if (context != null && cls != null) {
@@ -72,6 +82,17 @@ public class Utils {
         }
     }
 
+    public static void showExitDialog(Activity activity) {
+        new AlertDialog.Builder(activity)
+                .setTitle("Exit Application")
+                .setMessage("Are you sure you want to exit?")
+                .setPositiveButton("Yes", (dialog, which) -> {
+                    activity.finishAffinity();
+                })
+                .setNegativeButton("No", (dialog, which) -> dialog.dismiss())
+                .setCancelable(false)
+                .show();
+    }
     public static void setError(EditText et, String str){
         et.setError(str);
         et.requestFocus();
@@ -81,8 +102,52 @@ public class Utils {
         et.setError(null);
     }
 
+    public static void init(Activity activity) {
+        SharedPreferences prefs = activity.getSharedPreferences("UserCredits", Context.MODE_PRIVATE);
+        documentId = prefs.getString("documentId", null);
+        userEmail = prefs.getString("userEmail", null);
 
+        if (documentId == null || documentId.isEmpty()) {
+            Log.e("Utils", "Document ID is null or empty!");
+            return;
+        }
+        if(userEmail == null || userEmail.isEmpty()){
+            Log.e("Utils", "User Email is null or empty!");
+            return;
+        }
 
+        db = FirebaseFirestore.getInstance();
+        db.collection("Users").document(documentId).get().addOnSuccessListener(documentSnapshot -> {
+            if (documentSnapshot.exists()) {
+                userName = documentSnapshot.getString("Name");
+                if (TextUtils.isEmpty(userName)) {
+                    userName = "Guest";
+                }
+            }else{
+                userName = "Guest";
+            }
+        })
+                .addOnFailureListener(e -> userName = "Guest");
+    }
+    public static String getDocumentId() {
+        return documentId;
+    }
+
+    public static void setDocumentId(String documentId) {
+        Utils.documentId = documentId;
+    }
+
+    public static String getUserEmail() {
+        return userEmail;
+    }
+
+    public static FirebaseFirestore getFirestoreInstance() {
+        return db;
+    }
+
+    public static String getUserName() {
+        return userName;
+    }
 }
 
 

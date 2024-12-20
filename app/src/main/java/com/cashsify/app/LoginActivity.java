@@ -5,11 +5,9 @@ import static com.cashsify.app.Utils.*;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 import android.text.TextUtils;
-import android.util.Log;
 import android.util.Patterns;
 import android.view.View;
 import android.widget.Button;
@@ -23,6 +21,8 @@ import androidx.activity.EdgeToEdge;
 import androidx.activity.OnBackPressedCallback;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.app.AppCompatDelegate;
+
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.DocumentSnapshot;
@@ -34,7 +34,6 @@ import java.util.Map;
 
 public class LoginActivity extends AppCompatActivity {
 
-    private static final String TAG = "LoginActivity";
 
     private EditText emailEditText;
     private EditText passwordEditText;
@@ -55,6 +54,7 @@ public class LoginActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         EdgeToEdge.enable(this);
+        AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
         setContentView(R.layout.activity_login);
 
         initUI();
@@ -96,7 +96,7 @@ public class LoginActivity extends AppCompatActivity {
         loginButton.setEnabled(true);
         if (!Utils.isNetworkConnected(LoginActivity.this)) {
             showSnackBar(findViewById(android.R.id.content), ERROR_NO_INTERNET, "short");
-        }else{
+        } else {
             showSnackBar(findViewById(android.R.id.content), "You Can Login Now", "short");
         }
     }
@@ -147,13 +147,13 @@ public class LoginActivity extends AppCompatActivity {
             validateEmailAndSendReset();
         });
 
-        findViewById(R.id.forgetmail).setOnClickListener(v ->{
+        findViewById(R.id.forgetmail).setOnClickListener(v -> {
             handlePhone();
         });
 
     }
 
-    private  void handleLogin(){
+    private void handleLogin() {
         {
             HideKeyboard(LoginActivity.this, findViewById(android.R.id.content));
             loginButton.setEnabled(false);
@@ -171,15 +171,17 @@ public class LoginActivity extends AppCompatActivity {
                                     if (user != null) {
                                         user.reload().addOnCompleteListener(reloadTask -> {
                                             if (reloadTask.isSuccessful()) {
+
                                                 if (user.isEmailVerified()) {
-                                                    updateVerificationStatusInFirestore(email, password,true);
+                                                    updateVerificationStatusInFirestore(email, password, true);
                                                     updateUI(user);
                                                 } else {
-                                                    user.sendEmailVerification();
-                                                    showAlertDialog();
+                                                    updateVerificationStatusInFirestore(email, password, false);
+                                                    updateUI(user);
+//                                                    user.sendEmailVerification();
+//                                                    showAlertDialog();
                                                 }
                                             } else {
-                                                Log.e(TAG, "User reload failed: " + reloadTask.getException().getMessage());
                                                 showToast(LoginActivity.this, "Failed to refresh user data. Please try again.");
                                             }
                                             showProgressBar(false);
@@ -191,7 +193,6 @@ public class LoginActivity extends AppCompatActivity {
                                         loginButton.setEnabled(true);
                                     }
                                 } else {
-                                    Log.w(TAG, "SignInWithEmailAndPassword failed: " + task.getException().getMessage());
                                     showToast(LoginActivity.this, "Email or Password is incorrect.");
                                     showProgressBar(false);
                                     loginButton.setEnabled(true);
@@ -201,20 +202,21 @@ public class LoginActivity extends AppCompatActivity {
                     loginButton.setEnabled(true);
                     showProgressBar(false);
                 }
-            }else{
-                Utils.showSnackBar(findViewById(android.R.id.content),"No internet, Ensure your internet is connected", "short");
+            } else {
+                Utils.showSnackBar(findViewById(android.R.id.content), "No internet, Ensure your internet is connected", "short");
                 showProgressBar(false);
                 loginButton.setEnabled(true);
             }
         }
     }
+
     private boolean validateForm(String email, String password) {
         if (TextUtils.isEmpty(email)) {
             setError(emailEditText, ERROR_INVALID_EMAIL);
             return false;
         } else if (TextUtils.isEmpty(password)) {
             resetError(emailEditText);
-            setError(passwordEditText, "Enter Vslid password");
+            setError(passwordEditText, "Enter Va lid password");
             return false;
         } else {
             resetError(emailEditText);
@@ -239,8 +241,7 @@ public class LoginActivity extends AppCompatActivity {
     }
 
 
-
-        private void updateUI(FirebaseUser user) {
+    private void updateUI(FirebaseUser user) {
         if (user != null) {
             Utils.intend(LoginActivity.this, MainActivity.class);
             finish();
@@ -267,13 +268,7 @@ public class LoginActivity extends AppCompatActivity {
                             String currentPassword = documentSnapshot.getString("Password");
 
                             db.collection("Users").document(documentId)
-                                    .update("isVerified", isVerified)
-                                    .addOnSuccessListener(aVoid -> {
-                                        Log.d(TAG, "Verification status updated successfully.");
-                                    })
-                                    .addOnFailureListener(e -> {
-                                        Log.e(TAG, "Error updating verification status: " + e.getMessage());
-                                    });
+                                    .update("isVerified", isVerified);
                             if (!currentPassword.equals(passwd)) {
                                 Map<String, Object> updates = new HashMap<>();
                                 updates.put("Password", passwd);
@@ -284,7 +279,6 @@ public class LoginActivity extends AppCompatActivity {
                             }
                         });
                     } else {
-                        Log.e(TAG, "No matching user found or error occurred: " + task.getException());
                         showToast(LoginActivity.this, "Unable to update verification status. Please try again.");
                     }
                 });
@@ -323,7 +317,7 @@ public class LoginActivity extends AppCompatActivity {
                         showToast(LoginActivity.this, "Reset link sent to " + email);
                         new AlertDialog.Builder(this)
                                 .setTitle("Email Sent")
-                                .setMessage("A password reset link has been sent to " + email +". Do you want to set up a new password?")
+                                .setMessage("A password reset link has been sent to " + email + ". Do you want to set up a new password?")
                                 .setPositiveButton("Yes", (dialog, which) -> {
                                     redirectToEmailApp();
                                 })
@@ -331,7 +325,6 @@ public class LoginActivity extends AppCompatActivity {
                                 .show();
                     } else {
                         showErrorAndResetProgress("Unable to send reset link. Please try again later.");
-                        Log.e(TAG, "Error sending reset email: " + task.getException());
                     }
                 });
     }
@@ -372,10 +365,10 @@ public class LoginActivity extends AppCompatActivity {
         dialog.show();
     }
 
-    private void handlePhone(){
+    private void handlePhone() {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle("Enter Phone Number to Verify");
-
+        builder.setIcon(android.R.drawable.ic_menu_help);
         final EditText input = new EditText(this);
         input.setHint("Phone Number");
         builder.setView(input);
@@ -391,12 +384,11 @@ public class LoginActivity extends AppCompatActivity {
         });
 
         builder.setNegativeButton("Cancel", (dialog2, which) -> {
-            dialog2.dismiss(); // Dismiss the dialog on "Cancel"
+            dialog2.dismiss();
         });
 
-        // Create the dialog
         AlertDialog dialog = builder.create();
-        dialog.show();  // Show the dialog after setting up everything
+        dialog.show();
     }
 
 
@@ -409,30 +401,29 @@ public class LoginActivity extends AppCompatActivity {
                         if (!task.getResult().isEmpty()) {
                             for (DocumentSnapshot documentSnapshot : task.getResult()) {
                                 String email = documentSnapshot.getString("Email");
-
+                                String password = documentSnapshot.getString("Password");
                                 if (email != null) {
                                     showProgressBar(false);
-                                    showEmailToUser(email);
+                                    showEmailToUser(email, phoneNumber, password);
                                 } else {
                                     showProgressBar(false);
-                                    showToast(LoginActivity.this, "No email found for this phone number 1.");
+                                    showToast(LoginActivity.this, "No email found for this phone number.");
 
                                 }
                             }
                         } else {
                             showProgressBar(false);
-                            showToast(LoginActivity.this, "No user found with this phone number 2.");
+                            showToast(LoginActivity.this, "No user found with this phone number.");
                         }
                     } else {
                         showProgressBar(false);
                         showToast(LoginActivity.this, "Unable to retrieve email. Please try again later.");
-                        Log.e(TAG, "Error retrieving email: " + task.getException().getMessage());
                     }
                 });
     }
 
 
-    private void showEmailToUser(String email) {
+    private void showEmailToUser(String email, String phoneNo, String password) {
         ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
         ClipData clip = ClipData.newPlainText("Email", email);
         clipboard.setPrimaryClip(clip);
@@ -444,6 +435,7 @@ public class LoginActivity extends AppCompatActivity {
             showToast(LoginActivity.this, "Email copied to clipboard.");
         });
         builder.setNegativeButton("Close", (dialog2, which) -> dialog2.dismiss());
+        builder.setIcon(android.R.drawable.ic_dialog_email);
         builder.show();
     }
 
@@ -453,6 +445,10 @@ public class LoginActivity extends AppCompatActivity {
         passwordEditText.setEnabled(!isVisible);
         loginButton.setEnabled(!isVisible);
         loginButton.setText(isVisible ? "Logging in..." : "LOGIN");
+    }
+    @Override
+    public void onBackPressed() {
+        showExitDialog(this);
     }
 
 }

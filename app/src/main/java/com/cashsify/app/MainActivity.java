@@ -1,8 +1,11 @@
 package com.cashsify.app;
 
+import static com.cashsify.app.Utils.showExitDialog;
+
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
-import android.view.MenuItem;
 import android.view.View;
 import android.view.Menu;
 import android.widget.TextView;
@@ -22,12 +25,9 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.cashsify.app.databinding.ActivityMainBinding;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.auth.PhoneAuthProvider;
 import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -47,12 +47,15 @@ public class MainActivity extends AppCompatActivity {
         binding.appBarMain.fab.setOnClickListener(view -> Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
                 .setAction("Action", null)
                 .setAnchorView(R.id.fab).show());
+        setupNavigation();
+    }
+    private void setupNavigation(){
         DrawerLayout drawer = binding.drawerLayout;
         NavigationView navigationView = binding.navView;
         // Passing each menu ID as a set of Ids because each
         // menu should be considered as top level destinations.
         mAppBarConfiguration = new AppBarConfiguration.Builder(
-                R.id.nav_home, R.id.nav_ads, R.id.nav_slideshow)
+                R.id.nav_home, R.id.nav_profile, R.id.nav_ads, R.id.nav_withdraw, R.id.nav_refer, R.id.nav_help, R.id.nav_aboutUs)
                 .setOpenableLayout(drawer)
                 .build();
         NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment_content_main);
@@ -98,6 +101,14 @@ public class MainActivity extends AppCompatActivity {
         }
 
         TvUserPhoneNumber.setText(documentId);
+
+        if (documentId != null && !documentId.isEmpty() && !documentId.equals("No ID Found") && currentUser != null ) {
+            SharedPreferences prefs = getSharedPreferences("UserCredits", Context.MODE_PRIVATE);
+            SharedPreferences.Editor editor = prefs.edit();
+            editor.putString("documentId", documentId);
+            editor.putString("userEmail", currentUser.getEmail());
+            editor.apply();
+        }
     }
 
     @Override
@@ -127,6 +138,7 @@ public class MainActivity extends AppCompatActivity {
                         if (task.isSuccessful() && task.getResult() != null && !task.getResult().isEmpty()) {
                             task.getResult().forEach(documentSnapshot -> {
                                 documentId = documentSnapshot.getId();
+
                                 db.collection("Users").document(documentId)
                                         .update("LastLogin", new Date());
                             });
@@ -138,7 +150,15 @@ public class MainActivity extends AppCompatActivity {
                     });
         }else{
             documentId = "User Not Logged In";
-            initUI();
+            try{
+                initUI();
+                }catch (Exception e){
+                e.printStackTrace();
+            }
         }
+    }
+    @Override
+    public void onBackPressed() {
+        showExitDialog(this);
     }
 }

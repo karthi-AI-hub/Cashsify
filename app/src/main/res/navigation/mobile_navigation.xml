@@ -7,19 +7,43 @@
 
     <fragment
         android:id="@+id/nav_home"
-        android:name="com.cashsify.app.ui.home.HomeFragment"
+        android:name="com.cashsify.app.HomeFragment"
         android:label="Dashboard"
         tools:layout="@layout/fragment_home" />
 
     <fragment
+        android:id="@+id/nav_profile"
+        android:name="com.cashsify.app.ProfileFragment"
+        android:label="Profile"
+        tools:layout="@layout/fragment_profile" />
+
+    <fragment
         android:id="@+id/nav_ads"
-        android:name="com.cashsify.app.ui.gallery.AdsFragment"
+        android:name="com.cashsify.app.ui.ads.AdsFragment"
         android:label="Watch Ads"
         tools:layout="@layout/fragment_ads" />
 
     <fragment
-        android:id="@+id/nav_slideshow"
-        android:name="com.cashsify.app.ui.slideshow.SlideshowFragment"
-        android:label="@string/menu_slideshow"
-        tools:layout="@layout/fragment_slideshow" />
+        android:id="@+id/nav_withdraw"
+        android:name="com.cashsify.app.ui.withdraw.WithdrawFragment"
+        android:label="Withdraw"
+        tools:layout="@layout/fragment_withdraw" />
+
+    <fragment
+        android:id="@+id/nav_refer"
+        android:name="com.cashsify.app.ui.refer.ReferFragment"
+        android:label="Refer Friend"
+        tools:layout="@layout/fragment_refer" />
+
+    <fragment
+        android:id="@+id/nav_help"
+        android:name="com.cashsify.app.ui.help.HelpFragment"
+        android:label="Need Help"
+        tools:layout="@layout/fragment_help" />
+
+    <fragment
+        android:id="@+id/nav_aboutUs"
+        android:name="com.cashsify.app.ui.aboutus.AboutusFragment"
+        android:label="About Us"
+        tools:layout="@layout/fragment_aboutus" />
 </navigation>

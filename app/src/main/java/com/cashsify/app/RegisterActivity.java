@@ -19,6 +19,8 @@ import android.widget.ProgressBar;
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.app.AppCompatDelegate;
+
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseAuthException;
 import com.google.firebase.auth.FirebaseAuthUserCollisionException;
@@ -34,7 +36,6 @@ import android.content.SharedPreferences;
 
 public class RegisterActivity extends AppCompatActivity {
 
-    private static final String TAG = "RegisterActivity";
 
     private EditText phoneEditText, emailEditText;
     private EditText passwordEditText, confirmPasswordEditText;
@@ -52,7 +53,7 @@ public class RegisterActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         EdgeToEdge.enable(this);
-
+        AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
         setContentView(R.layout.activity_register);
         InitUI();
         setOnClicks();
@@ -176,7 +177,6 @@ public class RegisterActivity extends AppCompatActivity {
         mAuth.createUserWithEmailAndPassword(email, password)
                 .addOnCompleteListener(this, task -> {
                     if (task.isSuccessful()) {
-                        Log.d(TAG, "createUserWithEmail:success");
                         progressBar.setVisibility(View.INVISIBLE);
                         saveUserData(phone,email,password);
                         FirebaseUser user = mAuth.getCurrentUser();
@@ -204,11 +204,9 @@ public class RegisterActivity extends AppCompatActivity {
         if (exception instanceof FirebaseAuthUserCollisionException) {
             showToast(this, "Email is already in use.");
         } else if (exception instanceof FirebaseAuthException) {
-            Log.e(TAG, "Authentication failed: ", exception);
-            showToast(this, "Authentication failed.");
+            showToast(this, "Something went wrong. Please try again.");
         } else {
-            Log.e(TAG, "Authentication failed: ", exception);
-            showToast(this, "Authentication failed.");
+            showToast(this, "Something went wrong. Please try again.");
         }
         progressBar.setVisibility(View.INVISIBLE);
         updateUI(null);
@@ -294,5 +292,10 @@ public class RegisterActivity extends AppCompatActivity {
         resetError(emailEditText);
         resetError(passwordEditText);
         resetError(confirmPasswordEditText);
+    }
+
+    @Override
+    public void onBackPressed() {
+        showExitDialog(this);
     }
 }
