@@ -19,7 +19,12 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.android.material.snackbar.Snackbar;
+import com.google.firebase.Timestamp;
 import com.google.firebase.firestore.FirebaseFirestore;
+
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
 
 public class Utils {
 
@@ -30,6 +35,7 @@ public class Utils {
     private static String documentId;
     private static String userEmail;
     private static String userName;
+    private static int totalCash = 0;
     private static FirebaseFirestore db;
 
     public static void intend(Context context, Class<?> cls) {
@@ -93,12 +99,13 @@ public class Utils {
                 .setCancelable(false)
                 .show();
     }
-    public static void setError(EditText et, String str){
+
+    public static void setError(EditText et, String str) {
         et.setError(str);
         et.requestFocus();
     }
 
-    public static void resetError(EditText et){
+    public static void resetError(EditText et) {
         et.setError(null);
     }
 
@@ -111,24 +118,25 @@ public class Utils {
             Log.e("Utils", "Document ID is null or empty!");
             return;
         }
-        if(userEmail == null || userEmail.isEmpty()){
+        if (userEmail == null || userEmail.isEmpty()) {
             Log.e("Utils", "User Email is null or empty!");
             return;
         }
 
         db = FirebaseFirestore.getInstance();
         db.collection("Users").document(documentId).get().addOnSuccessListener(documentSnapshot -> {
-            if (documentSnapshot.exists()) {
-                userName = documentSnapshot.getString("Name");
-                if (TextUtils.isEmpty(userName)) {
-                    userName = "Guest";
-                }
-            }else{
-                userName = "Guest";
-            }
-        })
+                    if (documentSnapshot.exists()) {
+                        userName = documentSnapshot.getString("Name");
+                        if (TextUtils.isEmpty(userName)) {
+                            userName = "Guest";
+                        }
+                    } else {
+                        userName = "Guest";
+                    }
+                })
                 .addOnFailureListener(e -> userName = "Guest");
     }
+
     public static String getDocumentId() {
         return documentId;
     }
@@ -148,6 +156,37 @@ public class Utils {
     public static String getUserName() {
         return userName;
     }
+
+    public static void setTotalCash(int newTotalCash){
+        totalCash = newTotalCash;
+        db.collection("Earnings").document(documentId)
+                .update("cashTotal", totalCash);
+    }
+    public static int getTotalCash(){
+        return totalCash;
+    }
+    public static void getCurrentDate(final OnLastLoginFetchedListener listener) {
+        db.collection("Users").document(documentId)
+                .get()
+                .addOnSuccessListener(documentSnapshot -> {
+                    if (documentSnapshot.exists()) {
+                        Timestamp timestamp = documentSnapshot.getTimestamp("LastLogin");
+                        if (timestamp != null) {
+                            Date lastLoginDate = timestamp.toDate();
+                            SimpleDateFormat dateFormat = new SimpleDateFormat("dd-MMM-yyyy", Locale.ENGLISH);
+                            String formattedDate = dateFormat.format(lastLoginDate);
+                            listener.onLastLoginFetched(formattedDate);
+                        }else {
+                            listener.onError("No LastLogin timestamp found.");
+                        }
+                    } else {
+                        listener.onError("User document not found.");
+                    }
+                })
+                .addOnFailureListener(e -> listener.onError("Error fetching LastLogin: " + e.getMessage()));
+    }
+    public interface OnLastLoginFetchedListener {
+        void onLastLoginFetched(String lastLoginDate);
+        void onError(String errorMessage);
+    }
 }
-
-

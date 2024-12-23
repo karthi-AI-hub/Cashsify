@@ -32,6 +32,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
+
 public class LoginActivity extends AppCompatActivity {
 
 
@@ -216,7 +217,7 @@ public class LoginActivity extends AppCompatActivity {
             return false;
         } else if (TextUtils.isEmpty(password)) {
             resetError(emailEditText);
-            setError(passwordEditText, "Enter Va lid password");
+            setError(passwordEditText, "Enter Valid password");
             return false;
         } else {
             resetError(emailEditText);

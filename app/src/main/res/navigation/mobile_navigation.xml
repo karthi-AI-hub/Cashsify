@@ -9,7 +9,14 @@
         android:id="@+id/nav_home"
         android:name="com.cashsify.app.HomeFragment"
         android:label="Dashboard"
-        tools:layout="@layout/fragment_home" />
+        tools:layout="@layout/fragment_home">
+        <action
+            android:id="@+id/action_home_to_ads"
+            app:destination="@id/nav_ads"
+            app:popUpTo="@id/nav_home"
+            app:popUpToInclusive="true"
+        />
+    </fragment>
 
     <fragment
         android:id="@+id/nav_profile"
@@ -19,13 +26,13 @@
 
     <fragment
         android:id="@+id/nav_ads"
-        android:name="com.cashsify.app.ui.ads.AdsFragment"
+        android:name="com.cashsify.app.AdsFragment"
         android:label="Watch Ads"
         tools:layout="@layout/fragment_ads" />
 
     <fragment
         android:id="@+id/nav_withdraw"
-        android:name="com.cashsify.app.ui.withdraw.WithdrawFragment"
+        android:name="com.cashsify.app.WithdrawFragment"
         android:label="Withdraw"
         tools:layout="@layout/fragment_withdraw" />
 

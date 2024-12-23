@@ -6,10 +6,12 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.view.Menu;
 import android.widget.TextView;
 
+import com.google.android.gms.ads.MobileAds;
 import com.google.android.material.snackbar.Snackbar;
 import com.google.android.material.navigation.NavigationView;
 
@@ -23,11 +25,12 @@ import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.cashsify.app.databinding.ActivityMainBinding;
+import com.google.firebase.Timestamp;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 
-import java.util.Date;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -35,6 +38,7 @@ public class MainActivity extends AppCompatActivity {
     private String documentId;
     private AppBarConfiguration mAppBarConfiguration;
     private ActivityMainBinding binding;
+    private AdHelper adHelper;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -43,12 +47,21 @@ public class MainActivity extends AppCompatActivity {
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
+        MobileAds.initialize(this, initializationStatus -> Log.d("AdLogs", "AdMob initialized."));
+
         setSupportActionBar(binding.appBarMain.toolbar);
         binding.appBarMain.fab.setOnClickListener(view -> Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
                 .setAction("Action", null)
                 .setAnchorView(R.id.fab).show());
         setupNavigation();
+
+        adHelper = new AdHelper(this);
     }
+
+    public AdHelper getAdHelper() {
+        return adHelper;
+    }
+
     private void setupNavigation(){
         DrawerLayout drawer = binding.drawerLayout;
         NavigationView navigationView = binding.navView;
@@ -140,7 +153,7 @@ public class MainActivity extends AppCompatActivity {
                                 documentId = documentSnapshot.getId();
 
                                 db.collection("Users").document(documentId)
-                                        .update("LastLogin", new Date());
+                                        .update("LastLogin", FieldValue.serverTimestamp());
                             });
                             initUI();
                         }else{

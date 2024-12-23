@@ -1,22 +1,104 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
+<ScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".ui.withdraw.WithdrawFragment">
+    android:padding="16dp">
 
-    <TextView
-        android:id="@+id/text_withdraw"
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginStart="8dp"
-        android:layout_marginTop="8dp"
-        android:layout_marginEnd="8dp"
-        android:textAlignment="center"
-        android:textSize="20sp"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
-</androidx.constraintlayout.widget.ConstraintLayout>
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/tv_user_balance"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Balance: ₹0"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:layout_gravity="center"
+            android:drawablePadding="10dp"
+            android:textColor="@color/design_default_color_primary_variant"
+            android:drawableStart="@drawable/icon_wallet"
+            android:layout_marginBottom="16dp" />
+
+        <TextView
+            android:id="@+id/tv_min_withdrawal"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Minimum withdrawal amount: ₹150"
+            android:textColor="@color/red"
+            android:textSize="14sp"
+            android:gravity="center"
+            android:layout_marginBottom="16dp" />
+
+        <EditText
+            android:id="@+id/et_withdraw_amount"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Enter amount to withdraw"
+            android:inputType="numberDecimal"
+            android:drawableStart="@drawable/icon_rupee"
+            android:padding="10dp"
+            android:textColor="@color/black"
+            android:drawablePadding="10dp"
+            android:background="@drawable/edittext_background"
+            android:layout_marginBottom="16dp" />
+
+        <EditText
+            android:id="@+id/et_upi_id"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Enter your UPI ID (e.g., user@upi)"
+            android:inputType="textEmailAddress"
+            android:drawablePadding="10dp"
+            android:drawableStart="@drawable/icon_bank"
+            android:padding="10dp"
+            android:textColor="@color/black"
+            android:background="@drawable/edittext_background"
+            android:layout_marginBottom="16dp" />
+
+        <Button
+            android:id="@+id/btn_submit_withdraw"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Withdraw"
+            android:textSize="16sp"
+            android:padding="12dp"
+            android:backgroundTint="@color/blue_600"
+            android:textColor="@android:color/white"
+            android:layout_marginBottom="24dp" />
+
+
+        <TextView
+            android:id="@+id/tv_withdraw_history_label"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Withdrawal History"
+            android:textSize="18sp"
+            android:textColor="@color/black"
+            android:textStyle="bold"
+            android:layout_marginBottom="8dp" />
+
+        <TextView
+            android:id="@+id/tv_no_history"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="No withdrawal history available"
+            android:textSize="16sp"
+            android:textColor="@android:color/darker_gray"
+            android:gravity="center"
+            android:visibility="gone"
+            android:layout_marginTop="8dp"
+            android:layout_marginBottom="16dp" />
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rv_withdraw_history"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:layout_marginBottom="16dp" />
+
+    </LinearLayout>
+</ScrollView>
