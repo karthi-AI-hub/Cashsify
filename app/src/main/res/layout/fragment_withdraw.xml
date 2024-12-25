@@ -116,4 +116,15 @@
         </ScrollView>
 
     </LinearLayout>
+    <TextView
+        android:id="@+id/tv_withdraw_disclaimer"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Withdrawals are typically completed within 7 days."
+        android:textSize="14sp"
+        android:textColor="@color/red"
+        android:gravity="center"
+        android:visibility="gone"
+        android:layout_alignParentBottom="true"
+        android:layout_marginBottom="16dp" />
 </RelativeLayout>

@@ -29,8 +29,8 @@ public class WithdrawFragment extends Fragment {
     private int userBalance = Utils.getTotalCash();
     private static final int MIN_WITHDRAW_AMOUNT = 150;
     private final List<String> withdrawalHistory = new ArrayList<>();
-    FirebaseFirestore db;
-    String documentId = Utils.getDocumentId();
+    private FirebaseFirestore db;
+    private String documentId = Utils.getDocumentId();
 
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
@@ -92,6 +92,7 @@ public class WithdrawFragment extends Fragment {
         String historyEntry = "Withdrawal of ₹" + amount + " to " + upiId + " - Pending ⏳\n";
         withdrawalHistory.add(historyEntry);
         binding.tvNoHistory.setVisibility(View.GONE);
+        binding.tvWithdrawDisclaimer.setVisibility(View.VISIBLE);
         binding.rvWithdrawHistory.getAdapter().notifyItemInserted(withdrawalHistory.size() - 1);
 
 
@@ -144,12 +145,15 @@ public class WithdrawFragment extends Fragment {
                         }
                         binding.rvWithdrawHistory.getAdapter().notifyDataSetChanged();
                         binding.tvNoHistory.setVisibility(View.GONE);
+                        binding.tvWithdrawDisclaimer.setVisibility(View.VISIBLE);
                     }else {
                         binding.tvNoHistory.setVisibility(View.VISIBLE);
+                        binding.tvWithdrawDisclaimer.setVisibility(View.GONE);
                     }
                 })
                 .addOnFailureListener(e -> Log.e("WithdrawFragment", "Error fetching withdrawal history", e));
     }
+
     private static class WithdrawalHistoryAdapter extends RecyclerView.Adapter<WithdrawalHistoryAdapter.ViewHolder> {
 
         private final List<String> history;
@@ -168,7 +172,8 @@ public class WithdrawFragment extends Fragment {
 
         @Override
         public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-            holder.bind(history.get(position));
+            String indexedText = (position + 1) + ") " + history.get(position);
+            holder.bind(indexedText);
         }
 
         @Override
@@ -190,6 +195,7 @@ public class WithdrawFragment extends Fragment {
             }
         }
     }
+
     @Override
     public void onDestroyView() {
         super.onDestroyView();
