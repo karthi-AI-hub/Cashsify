@@ -9,7 +9,7 @@
     <RelativeLayout
         android:id="@+id/curvedHeader"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_height="wrap_content"
         android:layout_alignParentTop="true"
         android:layout_above="@+id/iv_logo"
         android:background="@drawable/curved_top_background"/>
@@ -20,7 +20,6 @@
         android:src="@mipmap/ic_launcher"
         android:layout_above="@+id/ll_container"
         android:layout_marginTop="10dp"
-        android:layout_marginBottom="30dp"
         android:layout_centerHorizontal="true"/>
 
     <LinearLayout
@@ -40,6 +39,7 @@
             app:cardElevation="1dp">
 
             <LinearLayout
+                android:id="@+id/ll_Data"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:background="#80b3ff"

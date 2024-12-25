@@ -6,6 +6,12 @@
     android:layout_height="match_parent"
     tools:context=".AdsFragment">
 
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:background="@drawable/curved_top_background"
+        android:layout_alignParentTop="true" />
+
     <LinearLayout
         android:id="@+id/ll_adsContainer"
         android:layout_width="match_parent"

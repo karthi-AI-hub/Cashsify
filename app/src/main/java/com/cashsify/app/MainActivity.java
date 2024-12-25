@@ -5,6 +5,7 @@ import static com.cashsify.app.Utils.showExitDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
@@ -50,9 +51,23 @@ public class MainActivity extends AppCompatActivity {
         MobileAds.initialize(this, initializationStatus -> Log.d("AdLogs", "AdMob initialized."));
 
         setSupportActionBar(binding.appBarMain.toolbar);
-        binding.appBarMain.fab.setOnClickListener(view -> Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                .setAction("Action", null)
-                .setAnchorView(R.id.fab).show());
+
+        binding.appBarMain.fab.setOnClickListener(view -> {
+            String email = "cashsify@gmail.com";
+            String subject = "Enter your Issues or Quires here. ";
+            String body = "Dear Cashsify Team,\n\nI have some queries in Cashsify Application. Please assist me with this Queries.\n\n\n\n[YOUR_QUERIES]\n\n\n\nThank you,\n[YOUR PHONE_NUMBER]";
+
+            String mailto = "mailto:" + email +
+                    "?subject=" + Uri.encode(subject) +
+                    "&body=" + Uri.encode(body);
+
+            Intent emailIntent = new Intent(Intent.ACTION_SENDTO);
+
+            emailIntent.setData(Uri.parse(mailto));
+            startActivity(Intent.createChooser(emailIntent, "Send email"));
+        });
+
+
         setupNavigation();
 
         adHelper = new AdHelper(this);
@@ -65,10 +80,9 @@ public class MainActivity extends AppCompatActivity {
     private void setupNavigation(){
         DrawerLayout drawer = binding.drawerLayout;
         NavigationView navigationView = binding.navView;
-        // Passing each menu ID as a set of Ids because each
-        // menu should be considered as top level destinations.
+
         mAppBarConfiguration = new AppBarConfiguration.Builder(
-                R.id.nav_home, R.id.nav_profile, R.id.nav_ads, R.id.nav_withdraw, R.id.nav_refer, R.id.nav_help, R.id.nav_aboutUs)
+                R.id.nav_home, R.id.nav_profile, R.id.nav_ads, R.id.nav_withdraw, R.id.nav_refer, R.id.nav_help)
                 .setOpenableLayout(drawer)
                 .build();
         NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment_content_main);
@@ -86,6 +100,10 @@ public class MainActivity extends AppCompatActivity {
                 finish();
                 handled = true;
                 return true;
+            } else if (item.getItemId() == R.id.nav_aboutUs) {
+                Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("https://sites.google.com/view/cashsify/home/"));
+                startActivity(browserIntent);
+                handled = true;
             }else {
                 handled = NavigationUI.onNavDestinationSelected(item, navController);
             }

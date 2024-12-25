@@ -54,6 +54,8 @@ dependencies {
     implementation("com.google.firebase:firebase-firestore")
     implementation("com.google.firebase:firebase-crashlytics")
     implementation("com.google.firebase:firebase-analytics")
+    implementation("com.google.firebase:firebase-messaging")
+    implementation("com.google.firebase:firebase-inappmessaging-display")
     implementation("androidx.cardview:cardview:1.0.0")
 
     implementation("com.google.android.gms:play-services-ads:23.6.0")

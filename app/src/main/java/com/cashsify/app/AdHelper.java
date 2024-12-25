@@ -9,7 +9,6 @@ import androidx.annotation.NonNull;
 import com.google.android.gms.ads.AdRequest;
 import com.google.android.gms.ads.LoadAdError;
 import com.google.android.gms.ads.OnUserEarnedRewardListener;
-import com.google.android.gms.ads.interstitial.InterstitialAd;
 import com.google.android.gms.ads.rewarded.RewardedAd;
 import com.google.android.gms.ads.rewarded.RewardedAdLoadCallback;
 import com.google.android.gms.ads.FullScreenContentCallback;
@@ -27,7 +26,7 @@ public class AdHelper {
 
     public void loadAd() {
         AdRequest adRequest = new AdRequest.Builder().build();
-        RewardedAd.load(context, "ca-app-pub-3940256099942544/5224354917", adRequest, new RewardedAdLoadCallback() {
+        RewardedAd.load(context, "ca-app-pub-7086602185948470/1291652554", adRequest, new RewardedAdLoadCallback() {
             @Override
             public void onAdLoaded(@NonNull RewardedAd ad) {
                 rewardedAd = ad;

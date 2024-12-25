@@ -61,18 +61,7 @@ public class HomeFragment extends Fragment {
 
         documentId = Utils.getDocumentId();
         db = Utils.getFirestoreInstance();
-        Utils.getCurrentDate(new Utils.OnLastLoginFetchedListener() {
-            @Override
-            public void onLastLoginFetched(String lastLoginDate) {
-                toDay = lastLoginDate;
-                binding.tvDate.setText("(" + toDay + ")");
-            }
 
-            @Override
-            public void onError(String errorMessage) {
-                binding.tvDate.setText("");
-            }
-        });
 
         TextView tvdailyTask = root.findViewById(R.id.tvDailyTask);
         tvdailyTask.setOnClickListener(v -> navigateToAds());
@@ -118,7 +107,11 @@ public class HomeFragment extends Fragment {
                         } else {
                             updateUI();
                         }
-                        resetDailyDataIfNeeded(documentSnapshot.getTimestamp("lastUpdated"), toDay);
+                        if (toDay != null) {
+                            resetDailyDataIfNeeded(documentSnapshot.getTimestamp("lastUpdated"), toDay);
+                        } else {
+                            Log.e(TAG, "toDay is null, skipping daily reset.");
+                        }
                     } else {
                         Log.e(TAG, "Document does not exist in Firestore.");
                     }
@@ -163,6 +156,7 @@ public class HomeFragment extends Fragment {
         newEarnings.put("referToday", 0);
         newEarnings.put("completedTasks", 0);
         newEarnings.put("lastUpdated", FieldValue.serverTimestamp());
+        newEarnings.put("lastResetDate", "");
 
         db.collection("Earnings").document(documentId).set(newEarnings)
                 .addOnSuccessListener(aVoid -> {
@@ -224,6 +218,8 @@ public class HomeFragment extends Fragment {
     private void resetDailyDataIfNeeded(Timestamp lastUpdated, String toDay) {
         if (lastUpdated == null || toDay == null) {
             Log.e(TAG, "Invalid parameters for resetDailyDataIfNeeded.");
+            Log.d(TAG, "lastUpdated: " + lastUpdated);
+            Log.d(TAG, "Today's Date: " + toDay);
             return;
         }
 
@@ -261,14 +257,30 @@ public class HomeFragment extends Fragment {
     @Override
     public void onStart() {
         super.onStart();
-        fetchDataFromFirestore();
-        setupRealTimeListener();
+
+        Utils.getCurrentDate(new Utils.OnLastLoginFetchedListener() {
+            @Override
+            public void onLastLoginFetched(String lastLoginDate) {
+                toDay = lastLoginDate;
+                binding.tvDate.setText("(" + toDay + ")");
+                fetchDataFromFirestore();
+                setupRealTimeListener();
+            }
+
+            @Override
+            public void onError(String errorMessage) {
+                binding.tvDate.setText("");
+            }
+        });
+
+
 
     }
 
     @Override
     public void onDestroyView() {
         super.onDestroyView();
+
         if (listenerRegistration != null) {
             listenerRegistration.remove();
             listenerRegistration = null;

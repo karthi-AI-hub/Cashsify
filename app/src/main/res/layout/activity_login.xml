@@ -7,18 +7,30 @@
     android:orientation="vertical"
     android:padding="16dp">
 
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="20dp">
+        <ImageView
+            android:id="@+id/fab"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:layout_alignParentEnd="true"
+            android:layout_marginTop="15dp"
+            android:src="@drawable/icon_help"
+            app:tint="@color/black" />
     <TextView
         android:id="@+id/header"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center"
-        android:layout_marginTop="20dp"
         android:text="Ca$hsify\nLogin to earn money"
         android:textAlignment="center"
+        android:layout_centerInParent="true"
         android:textColor="@color/black"
         android:textSize="24sp"
         android:textStyle="bold" />
-
+    </RelativeLayout>
     <ImageView
         android:layout_width="30dp"
         android:layout_height="30dp"
@@ -213,10 +225,9 @@
             android:progressTint="@android:color/white"
             android:theme="@style/CustomProgressBar"
             android:layout_gravity="center" />
-        <RelativeLayout
+         <RelativeLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-
             android:padding="16dp">
 
             <ImageView
@@ -265,6 +276,8 @@
                 android:textSize="30sp" />
 
         </RelativeLayout>
+
+
     </LinearLayout>
 
     <LinearLayout

@@ -83,13 +83,15 @@ public class WithdrawFragment extends Fragment {
     }
 
     private void processUpiWithdrawal(int amount, String upiId) {
+        binding.etUpiId.setText("");
+        binding.etWithdrawAmount.setText("");
         userBalance -= amount;
         binding.tvUserBalance.setText("Balance: ₹" + userBalance);
         Utils.setTotalCash(userBalance);
 
-        String historyEntry = "Withdrawal of ₹" + amount + " to " + upiId + " - Success ✅\n";
+        String historyEntry = "Withdrawal of ₹" + amount + " to " + upiId + " - Pending ⏳\n";
         withdrawalHistory.add(historyEntry);
-        binding.tvNoHistory.setVisibility(View.VISIBLE);
+        binding.tvNoHistory.setVisibility(View.GONE);
         binding.rvWithdrawHistory.getAdapter().notifyItemInserted(withdrawalHistory.size() - 1);
 
 
@@ -104,16 +106,17 @@ public class WithdrawFragment extends Fragment {
         paymentData.put("user", documentId);
         paymentData.put("upiId", upiId);
         paymentData.put("amount", amount);
-        paymentData.put("time", FieldValue.serverTimestamp());  // Add a timestamp for when the withdrawal happens
+        paymentData.put("time", FieldValue.serverTimestamp());
+        paymentData.put("status", "Pending");
 
         db.collection("Payments").document(documentId)
                 .collection("Withdrawals")
                 .get()
                 .addOnSuccessListener(queryDocumentSnapshots -> {
-                    int nextId = queryDocumentSnapshots.size() + 1; // Determine the next numeric ID
+                    int nextId = queryDocumentSnapshots.size() + 1;
                     db.collection("Payments").document(documentId)
                             .collection("Withdrawals")
-                            .document(String.valueOf(nextId)) // Use the numeric ID as the document ID
+                            .document(String.valueOf(nextId))
                             .set(paymentData)
                             .addOnSuccessListener(aVoid ->
                                     Log.d("WithdrawFragment", "Payment successfully stored with ID: " + nextId))
@@ -132,10 +135,15 @@ public class WithdrawFragment extends Fragment {
                     withdrawalHistory.clear();
                     if (!queryDocumentSnapshots.isEmpty()) {
                         for (DocumentSnapshot document : queryDocumentSnapshots.getDocuments()) {
-                            String historyEntry = "Withdrawal of ₹" + document.getDouble("amount") + " to " + document.getString("upiId") + " - Success ✅\n";
+                            String status = "Pending ⏳";
+                            if (document.getString("status") != null) {
+                                status = document.getString("status").equals("Completed") ? "Completed ✅" : "Pending ⏳";
+                            }
+                            String historyEntry = "Withdrawal of ₹" + document.getDouble("amount") + " to " + document.getString("upiId") + " - " + status + "\n";
                             withdrawalHistory.add(historyEntry);
                         }
                         binding.rvWithdrawHistory.getAdapter().notifyDataSetChanged();
+                        binding.tvNoHistory.setVisibility(View.GONE);
                     }else {
                         binding.tvNoHistory.setVisibility(View.VISIBLE);
                     }

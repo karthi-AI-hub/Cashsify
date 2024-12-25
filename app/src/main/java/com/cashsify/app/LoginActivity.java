@@ -6,6 +6,7 @@ import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Patterns;
@@ -150,6 +151,21 @@ public class LoginActivity extends AppCompatActivity {
 
         findViewById(R.id.forgetmail).setOnClickListener(v -> {
             handlePhone();
+        });
+
+        findViewById(R.id.fab).setOnClickListener(v ->{
+            String email = "cashsify@gmail.com";
+            String subject = "Enter your Issues or Quires here. ";
+            String body = "Dear Cashsify Team,\n\nI have some queries in Cashsify Application. Please assist me with this Queries.\n\n\n\n[YOUR_QUERIES]\n\n\n\nThank you,\n[YOUR PHONE_NUMBER]";
+
+            String mailto = "mailto:" + email +
+                    "?subject=" + Uri.encode(subject) +
+                    "&body=" + Uri.encode(body);
+
+            Intent emailIntent = new Intent(Intent.ACTION_SENDTO);
+
+            emailIntent.setData(Uri.parse(mailto));
+            startActivity(Intent.createChooser(emailIntent, "Send email"));
         });
 
     }

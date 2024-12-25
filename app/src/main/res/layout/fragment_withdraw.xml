@@ -1,14 +1,25 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView
+<RelativeLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:padding="16dp">
+    >
+
+    <RelativeLayout
+        android:id="@+id/rl_header"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:background="@drawable/curved_top_background"
+        android:layout_alignParentTop="true" />
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_below="@+id/rl_header"
+        android:padding="16dp"
+        android:layout_marginTop="10dp"
         android:orientation="vertical">
+
 
         <TextView
             android:id="@+id/tv_user_balance"
@@ -93,12 +104,16 @@
             android:layout_marginTop="8dp"
             android:layout_marginBottom="16dp" />
 
+        <ScrollView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/rv_withdraw_history"
             android:layout_width="match_parent"
             android:layout_height="0dp"
             android:layout_weight="1"
-            android:layout_marginBottom="16dp" />
+            android:layout_marginBottom="10dp" />
+        </ScrollView>
 
     </LinearLayout>
-</ScrollView>
+</RelativeLayout>

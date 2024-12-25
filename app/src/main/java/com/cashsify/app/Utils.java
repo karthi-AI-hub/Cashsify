@@ -162,9 +162,10 @@ public class Utils {
         db.collection("Earnings").document(documentId)
                 .update("cashTotal", totalCash);
     }
-    public static int getTotalCash(){
+    public static int getTotalCash() {
         return totalCash;
     }
+
     public static void getCurrentDate(final OnLastLoginFetchedListener listener) {
         db.collection("Users").document(documentId)
                 .get()
@@ -189,4 +190,6 @@ public class Utils {
         void onLastLoginFetched(String lastLoginDate);
         void onError(String errorMessage);
     }
+
+
 }

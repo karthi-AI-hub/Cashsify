@@ -3,10 +3,17 @@ package com.cashsify.app;
 import static com.cashsify.app.Utils.*;
 
 import android.content.Context;
+import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.text.SpannableString;
+import android.text.Spanned;
 import android.text.TextUtils;
+import android.text.method.LinkMovementMethod;
+import android.text.style.ClickableSpan;
+import android.text.style.ForegroundColorSpan;
 import android.util.Log;
 
 import android.util.Patterns;
@@ -32,6 +39,7 @@ import com.google.firebase.firestore.FirebaseFirestore;
 import java.util.HashMap;
 import java.util.Map;
 import android.content.SharedPreferences;
+import android.widget.TextView;
 
 
 public class RegisterActivity extends AppCompatActivity {
@@ -39,6 +47,7 @@ public class RegisterActivity extends AppCompatActivity {
 
     private EditText phoneEditText, emailEditText;
     private EditText passwordEditText, confirmPasswordEditText;
+    private TextView termsText;
     private Button registerButton;
     private FirebaseAuth mAuth;
     private ProgressBar progressBar;
@@ -70,6 +79,7 @@ public class RegisterActivity extends AppCompatActivity {
         ivTogglePassword = findViewById(R.id.ivTogglePassword);
         ivTogglePassword2 = findViewById(R.id.ivTogglePassword2);
         mAuth = FirebaseAuth.getInstance();
+        termsText = findViewById(R.id.termsText);
 
         if (!Utils.isNetworkConnected(RegisterActivity.this)) {
             showSnackBar(findViewById(android.R.id.content), ERROR_NO_INTERNET, "short");
@@ -81,7 +91,6 @@ public class RegisterActivity extends AppCompatActivity {
     private void setOnClicks() {
         phoneEditText.requestFocus();
         sharedPref = getSharedPreferences("UserPref", Context.MODE_PRIVATE);
-
         View.OnClickListener loginClickListener = v -> {
             HideKeyboard(RegisterActivity.this, findViewById(android.R.id.content));
             progressBar.setVisibility(View.VISIBLE);
@@ -136,6 +145,50 @@ public class RegisterActivity extends AppCompatActivity {
             HideKeyboard(RegisterActivity.this, findViewById(android.R.id.content));
             Utils.togglePasswordVisibility(confirmPasswordEditText, ivTogglePassword2);
         });
+
+        findViewById(R.id.fab).setOnClickListener(v ->{
+            String email = "cashsify@gmail.com";
+            String subject = "Enter your Issues or Quires here. ";
+            String body = "Dear Cashsify Team,\n\nI have some queries in Cashsify Application. Please assist me with this Queries.\n\n\n\n[YOUR_QUERIES]\n\n\n\nThank you,\n[YOUR PHONE_NUMBER]";
+
+            String mailto = "mailto:" + email +
+                    "?subject=" + Uri.encode(subject) +
+                    "&body=" + Uri.encode(body);
+
+            Intent emailIntent = new Intent(Intent.ACTION_SENDTO);
+
+            emailIntent.setData(Uri.parse(mailto));
+            startActivity(Intent.createChooser(emailIntent, "Send email"));
+        });
+
+        String text = "By registering, you confirm that you accept Cashsify's Terms & Conditions and Privacy Policy.";
+
+        SpannableString spannableString = new SpannableString(text);
+
+        int termsStart = text.indexOf("Terms & Conditions");
+        int termsEnd = termsStart + "Terms & Conditions".length();
+        spannableString.setSpan(new ClickableSpan() {
+            @Override
+            public void onClick(View widget) {
+                Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("https://sites.google.com/view/cashsify/terms-and-conditions/"));
+                startActivity(browserIntent);
+            }
+        }, termsStart, termsEnd, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        spannableString.setSpan(new ForegroundColorSpan(getResources().getColor(R.color.white)), termsStart, termsEnd, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+
+        int policyStart = text.indexOf("Privacy Policy");
+        int policyEnd = policyStart + "Privacy Policy".length();
+        spannableString.setSpan(new ClickableSpan() {
+            @Override
+            public void onClick(View widget) {
+                Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse("https://sites.google.com/view/cashsify/privacy-policies/"));
+                startActivity(browserIntent);
+            }
+        }, policyStart, policyEnd, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+
+        spannableString.setSpan(new ForegroundColorSpan(getResources().getColor(R.color.white)), policyStart, policyEnd, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+        termsText.setText(spannableString);
+        termsText.setMovementMethod(LinkMovementMethod.getInstance());
     }
 
     private boolean validateForm(String phone, String email, String password, String confirmPassword) {

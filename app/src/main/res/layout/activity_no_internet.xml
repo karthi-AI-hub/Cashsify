@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/main"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".MaintenanceActivity">
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="100dp"
+        android:background="@drawable/curved_top_background"
+        android:layout_alignParentTop="true" />
+
+    <ImageView
+        android:id="@+id/maintenanceImage"
+        android:layout_width="150dp"
+        android:layout_height="150dp"
+        android:layout_centerHorizontal="true"
+        android:layout_above="@+id/maintenanceTitle"
+        android:src="@drawable/icon_nointernet"
+        android:scaleType="fitCenter" />
+
+    <TextView
+        android:id="@+id/maintenanceTitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerInParent="true"
+        android:layout_marginTop="32dp"
+        android:text="No Internet Connection!"
+        android:textColor="@color/black"
+        android:textSize="26sp"
+        android:textStyle="bold"
+        android:paddingHorizontal="16dp" />
+
+    <TextView
+        android:id="@+id/maintenanceSubtitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/maintenanceTitle"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="12dp"
+        android:text="Uh-oh! Please make sure your are connected to the internet.."
+        android:textColor="@color/black"
+        android:textSize="16sp"
+        android:gravity="center"
+        android:paddingHorizontal="24dp" />
+
+    <Button
+        android:id="@+id/retryButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerHorizontal="true"
+        android:layout_alignParentBottom="true"
+        android:text="Retry"
+        android:textSize="18sp"
+        android:textColor="@color/white"
+        android:backgroundTint="@color/blue_600"
+        android:textStyle="bold"
+        android:layout_marginBottom="80dp"
+        android:paddingHorizontal="24dp"
+        android:paddingVertical="12dp"
+        android:elevation="6dp" />
+
+    <TextView
+        android:id="@+id/footerText"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+        android:layout_marginBottom="22dp"
+        android:text="Powered by Cashsify"
+        android:textColor="@color/black"
+        android:textSize="12sp" />
+</RelativeLayout>

@@ -9,6 +9,17 @@
     <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content">
+
+        <ImageView
+            android:id="@+id/fab"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:layout_alignParentEnd="true"
+            android:src="@drawable/icon_help"
+            android:layout_marginTop="50dp"
+            android:layout_marginEnd="16dp"
+            app:tint="@color/black" />
+
         <TextView
             android:id="@+id/Header"
             android:layout_width="wrap_content"
@@ -223,11 +234,13 @@
             android:src="@drawable/coins" />
 
         <TextView
+            android:id="@+id/termsText"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:paddingStart="25dp"
-            android:text="By Clicking Register you agree to the Terms and Conditions and Privacy Policy of Cashsify"
+            android:text="By Clicking Register you agree to the Terms &amp; Conditions and Privacy Policy of Cashsify"
             android:textColor="@color/black"
+            android:textAlignment="center"
             android:textSize="14sp" />
 
         <TextView
