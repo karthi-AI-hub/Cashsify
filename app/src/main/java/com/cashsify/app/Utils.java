@@ -20,6 +20,7 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.google.android.material.snackbar.Snackbar;
 import com.google.firebase.Timestamp;
+import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.firestore.FirebaseFirestore;
 
 import java.text.SimpleDateFormat;
@@ -36,7 +37,7 @@ public class Utils {
     private static String userEmail;
     private static String userName;
     private static int totalCash = 0;
-    private static FirebaseFirestore db;
+    private static final FirebaseFirestore db = FirebaseFirestore.getInstance();
 
     public static void intend(Context context, Class<?> cls) {
         if (context != null && cls != null) {
@@ -109,44 +110,20 @@ public class Utils {
         et.setError(null);
     }
 
-    public static void init(Activity activity) {
-        SharedPreferences prefs = activity.getSharedPreferences("UserCredits", Context.MODE_PRIVATE);
-        documentId = prefs.getString("documentId", null);
-        userEmail = prefs.getString("userEmail", null);
-
-        if (documentId == null || documentId.isEmpty()) {
-            Log.e("Utils", "Document ID is null or empty!");
-            return;
-        }
-        if (userEmail == null || userEmail.isEmpty()) {
-            Log.e("Utils", "User Email is null or empty!");
-            return;
-        }
-
-        db = FirebaseFirestore.getInstance();
-        db.collection("Users").document(documentId).get().addOnSuccessListener(documentSnapshot -> {
-                    if (documentSnapshot.exists()) {
-                        userName = documentSnapshot.getString("Name");
-                        if (TextUtils.isEmpty(userName)) {
-                            userName = "Guest";
-                        }
-                    } else {
-                        userName = "Guest";
-                    }
-                })
-                .addOnFailureListener(e -> userName = "Guest");
-    }
-
     public static String getDocumentId() {
         return documentId;
     }
 
-    public static void setDocumentId(String documentId) {
-        Utils.documentId = documentId;
+    public static void setDocumentId(String documentID) {
+        Utils.documentId = documentID;
     }
 
     public static String getUserEmail() {
         return userEmail;
+    }
+
+    public static void setUserEmail(String userEmail) {
+        Utils.userEmail = userEmail;
     }
 
     public static FirebaseFirestore getFirestoreInstance() {
@@ -155,6 +132,10 @@ public class Utils {
 
     public static String getUserName() {
         return userName;
+    }
+
+    public static void setUserName(String userName) {
+        Utils.userName = userName;
     }
 
     public static void setTotalCash(int newTotalCash){
@@ -166,30 +147,31 @@ public class Utils {
         return totalCash;
     }
 
-    public static void getCurrentDate(final OnLastLoginFetchedListener listener) {
-        db.collection("Users").document(documentId)
-                .get()
-                .addOnSuccessListener(documentSnapshot -> {
-                    if (documentSnapshot.exists()) {
-                        Timestamp timestamp = documentSnapshot.getTimestamp("LastLogin");
-                        if (timestamp != null) {
-                            Date lastLoginDate = timestamp.toDate();
-                            SimpleDateFormat dateFormat = new SimpleDateFormat("dd-MMM-yyyy", Locale.ENGLISH);
-                            String formattedDate = dateFormat.format(lastLoginDate);
-                            listener.onLastLoginFetched(formattedDate);
-                        }else {
-                            listener.onError("No LastLogin timestamp found.");
-                        }
-                    } else {
-                        listener.onError("User document not found.");
-                    }
-                })
-                .addOnFailureListener(e -> listener.onError("Error fetching LastLogin: " + e.getMessage()));
-    }
-    public interface OnLastLoginFetchedListener {
-        void onLastLoginFetched(String lastLoginDate);
-        void onError(String errorMessage);
-    }
-
+//    public static void getCurrentDate(final OnLastLoginFetchedListener listener) {
+//        if (documentId != null) {
+//            db.collection("Users").document(documentId)
+//                    .get()
+//                    .addOnSuccessListener(documentSnapshot -> {
+//                        if (documentSnapshot.exists()) {
+//                            Timestamp timestamp = documentSnapshot.getTimestamp("LastLogin");
+//                            if (timestamp != null) {
+//                                Date lastLoginDate = timestamp.toDate();
+//                                SimpleDateFormat dateFormat = new SimpleDateFormat("dd-MMM-yyyy", Locale.ENGLISH);
+//                                String formattedDate = dateFormat.format(lastLoginDate);
+//                                listener.onLastLoginFetched(formattedDate);
+//                            } else {
+//                                listener.onError("No LastLogin timestamp found.");
+//                            }
+//                        } else {
+//                            listener.onError("User document not found.");
+//                        }
+//                    })
+//                    .addOnFailureListener(e -> listener.onError("Error fetching LastLogin: " + e.getMessage()));
+//        }
+//    }
+//    public interface OnLastLoginFetchedListener {
+//        void onLastLoginFetched(String lastLoginDate);
+//        void onError(String errorMessage);
+//    }
 
 }

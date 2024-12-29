@@ -28,7 +28,7 @@ public class WithdrawFragment extends Fragment {
     private FragmentWithdrawBinding binding;
     private int userBalance = Utils.getTotalCash();
     private static final int MIN_WITHDRAW_AMOUNT = 150;
-    private final List<String> withdrawalHistory = new ArrayList<>();
+    private final List<Withdrawal> withdrawalHistory = new ArrayList<>();
     private FirebaseFirestore db;
     private String documentId = Utils.getDocumentId();
 
@@ -89,10 +89,11 @@ public class WithdrawFragment extends Fragment {
         binding.tvUserBalance.setText("Balance: ₹" + userBalance);
         Utils.setTotalCash(userBalance);
 
-        String historyEntry = "Withdrawal of ₹" + amount + " to " + upiId + " - Pending ⏳\n";
-        withdrawalHistory.add(historyEntry);
+        Withdrawal withdrawal = new Withdrawal(amount, upiId, "Pending⏳");
+        withdrawalHistory.add(withdrawal);
         binding.tvNoHistory.setVisibility(View.GONE);
         binding.tvWithdrawDisclaimer.setVisibility(View.VISIBLE);
+        binding.tableHeader.setVisibility(View.VISIBLE);
         binding.rvWithdrawHistory.getAdapter().notifyItemInserted(withdrawalHistory.size() - 1);
 
 
@@ -140,15 +141,23 @@ public class WithdrawFragment extends Fragment {
                             if (document.getString("status") != null) {
                                 status = document.getString("status").equals("Completed") ? "Completed ✅" : "Pending ⏳";
                             }
-                            String historyEntry = "Withdrawal of ₹" + document.getDouble("amount") + " to " + document.getString("upiId") + " - " + status + "\n";
-                            withdrawalHistory.add(historyEntry);
+                            Withdrawal withdrawal = new Withdrawal(
+                                    document.getDouble("amount"),
+                                    document.getString("upiId"),
+                                    status
+                            );
+                            withdrawalHistory.add(withdrawal);
                         }
                         binding.rvWithdrawHistory.getAdapter().notifyDataSetChanged();
                         binding.tvNoHistory.setVisibility(View.GONE);
                         binding.tvWithdrawDisclaimer.setVisibility(View.VISIBLE);
+                        binding.tableHeader.setVisibility(View.VISIBLE);
+
                     }else {
                         binding.tvNoHistory.setVisibility(View.VISIBLE);
                         binding.tvWithdrawDisclaimer.setVisibility(View.GONE);
+                        binding.tableHeader.setVisibility(View.GONE);
+
                     }
                 })
                 .addOnFailureListener(e -> Log.e("WithdrawFragment", "Error fetching withdrawal history", e));
@@ -156,9 +165,8 @@ public class WithdrawFragment extends Fragment {
 
     private static class WithdrawalHistoryAdapter extends RecyclerView.Adapter<WithdrawalHistoryAdapter.ViewHolder> {
 
-        private final List<String> history;
-
-        WithdrawalHistoryAdapter(List<String> history) {
+        private final List<Withdrawal> history;
+        WithdrawalHistoryAdapter(List<Withdrawal> history) {
             this.history = history;
         }
 
@@ -166,14 +174,14 @@ public class WithdrawFragment extends Fragment {
         @Override
         public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
             View view = LayoutInflater.from(parent.getContext())
-                    .inflate(android.R.layout.simple_list_item_1, parent, false);
+                    .inflate(R.layout.item_withdrawal_history, parent, false);
             return new ViewHolder(view);
         }
 
         @Override
         public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-            String indexedText = (position + 1) + ") " + history.get(position);
-            holder.bind(indexedText);
+            Withdrawal withdrawal = history.get(position);
+            holder.bind(position + 1, withdrawal);
         }
 
         @Override
@@ -183,15 +191,25 @@ public class WithdrawFragment extends Fragment {
 
         static class ViewHolder extends RecyclerView.ViewHolder {
 
-            private final TextView textView;
+            private final TextView tvSerialNumber;
+            private final TextView tvAmount;
+            private final TextView tvUpiId;
+            private final TextView tvStatus;
 
             ViewHolder(@NonNull View itemView) {
                 super(itemView);
-                textView = itemView.findViewById(android.R.id.text1);
+                tvSerialNumber = itemView.findViewById(R.id.tvSerialNumber);
+                tvAmount = itemView.findViewById(R.id.tvAmount);
+                tvUpiId = itemView.findViewById(R.id.tvUpiId);
+                tvStatus = itemView.findViewById(R.id.tvStatus);
             }
 
-            void bind(String text) {
-                textView.setText(text);
+            void bind(int serialNumber, Withdrawal withdrawal) {
+                String sno = serialNumber + ") ";
+                tvSerialNumber.setText(sno);
+                tvAmount.setText("₹" + withdrawal.getAmount());
+                tvUpiId.setText(withdrawal.getUpiId());
+                tvStatus.setText(withdrawal.getStatus());
             }
         }
     }
@@ -202,3 +220,4 @@ public class WithdrawFragment extends Fragment {
         binding = null;
     }
 }
+

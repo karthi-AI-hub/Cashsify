@@ -29,7 +29,7 @@ import com.google.firebase.firestore.WriteBatch;
 
 public class ProfileFragment extends Fragment {
 
-    public final String TAG = "ProfileFragment";
+
     private FragmentProfileBinding binding;
 
     public View onCreateView(@NonNull LayoutInflater inflater,
@@ -44,7 +44,6 @@ public class ProfileFragment extends Fragment {
     }
 
     private void initUI() {
-        Utils.init(requireActivity());
         binding.tvUserEmail.setText(Utils.getUserEmail());
         binding.tvUserPhone.setText(Utils.getDocumentId());
         binding.tvUserName.setText(Utils.getUserName());
@@ -382,7 +381,8 @@ public class ProfileFragment extends Fragment {
                 Utils.showToast(requireContext(), "Value Cannot be empty");
                 return;
             }
-                updateFieldInFirestore("Name", newValue, binding.tvUserName);
+            updateFieldInFirestore("Name", newValue, binding.tvUserName);
+            Utils.setUserName(newValue);
 
         });
 

@@ -17,9 +17,12 @@
     <style name="Theme.Cashsify.NoActionBar">
         <item name="windowActionBar">false</item>
         <item name="windowNoTitle">true</item>
+
     </style>
 
-    <style name="Theme.Cashsify.AppBarOverlay" parent="ThemeOverlay.AppCompat.Dark.ActionBar" />
+    <style name="Theme.Cashsify.AppBarOverlay" parent="ThemeOverlay.AppCompat.Dark.ActionBar">
+    </style>
 
-    <style name="Theme.Cashsify.PopupOverlay" parent="ThemeOverlay.AppCompat.Light" />
+    <style name="Theme.Cashsify.PopupOverlay" parent="ThemeOverlay.AppCompat.Light">
+    </style>
 </resources>

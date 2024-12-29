@@ -2,6 +2,7 @@ package com.cashsify.app;
 
 import android.app.Activity;
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -10,11 +11,11 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.navigation.NavController;
-import androidx.navigation.NavOptions;
-import androidx.navigation.fragment.NavHostFragment;
 
+import androidx.navigation.fragment.NavHostFragment;
 
 import com.cashsify.app.databinding.FragmentHomeBinding;
 import com.google.firebase.Timestamp;
@@ -33,39 +34,29 @@ import java.util.Map;
 
 public class HomeFragment extends Fragment {
 
-    private static final String TAG = "HomeFragment";
-    private FragmentHomeBinding binding;
+    private final String TAG = "HomeFragment";
+    public FragmentHomeBinding binding;
     private int cashWalletTotal = 0;
     private int referWalletTotal = 0;
     private int cashWalletToday = 0;
     private int referWalletToday = 0;
     private int completedTask = 0;
-    private String documentId;
-    private FirebaseFirestore db;
+    private String today;
+    private final String documentId = Utils.getDocumentId();
+    private final FirebaseFirestore db = FirebaseFirestore.getInstance();
     private ListenerRegistration listenerRegistration;
-    private String toDay;
-
-    @Override
-    public void onAttach(@NonNull Context context) {
-        super.onAttach(context);
-        if (context instanceof Activity) {
-            Utils.init((Activity) context);
-        }
-    }
-
 
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
+        Log.d(TAG, "onCreateView called");
         binding = FragmentHomeBinding.inflate(inflater, container, false);
         View root = binding.getRoot();
-
-        documentId = Utils.getDocumentId();
-        db = Utils.getFirestoreInstance();
-
 
         TextView tvdailyTask = root.findViewById(R.id.tvDailyTask);
         tvdailyTask.setOnClickListener(v -> navigateToAds());
 
+        fetchDataFromFirestore();
+        setupRealTimeListener();
         return root;
     }
 
@@ -78,14 +69,12 @@ public class HomeFragment extends Fragment {
 
         if (listenerRegistration != null) {
             listenerRegistration.remove();
-            listenerRegistration = null;
         }
 
         if (documentId == null) {
-            Log.e(TAG, "Document ID is null. Cannot set up real-time listener.");
+            Log.e(TAG, "Document ID is null. Cannot set up real-time listener." + documentId);
             return;
         }
-
         listenerRegistration = db.collection("Earnings").document(documentId)
                 .addSnapshotListener((documentSnapshot, e) -> {
                     if (e != null) {
@@ -94,6 +83,7 @@ public class HomeFragment extends Fragment {
                     }
 
                     if (documentSnapshot != null && documentSnapshot.exists()) {
+
                         cashWalletTotal = documentSnapshot.getLong("cashTotal") != null ? documentSnapshot.getLong("cashTotal").intValue() : 0;
                         cashWalletToday = documentSnapshot.getLong("cashToday") != null ? documentSnapshot.getLong("cashToday").intValue() : 0;
 
@@ -102,26 +92,22 @@ public class HomeFragment extends Fragment {
 
                         completedTask = documentSnapshot.getLong("completedTasks") != null ? documentSnapshot.getLong("completedTasks").intValue() : 0;
 
+                        today = documentSnapshot.getString("CurrentDate") != null ? documentSnapshot.getString("CurrentDate") : "";
                         if (completedTask >= 20) {
                             updateCompletedTaskUI();
                         } else {
                             updateUI();
                         }
-                        if (toDay != null) {
-                            resetDailyDataIfNeeded(documentSnapshot.getTimestamp("lastUpdated"), toDay);
-                        } else {
-                            Log.e(TAG, "toDay is null, skipping daily reset.");
-                        }
                     } else {
-                        Log.e(TAG, "Document does not exist in Firestore.");
+                        createEarningsDocument();
                     }
                 });
     }
 
     private void fetchDataFromFirestore() {
         if (documentId == null) {
-            Log.e(TAG, "Document ID is null. Cannot fetch data.");
-            return;
+            Log.e(TAG, "Document ID is null. Cannot fetch data." + documentId);
+                return;
         }
 
         db.collection("Earnings").document(documentId).get()
@@ -135,28 +121,30 @@ public class HomeFragment extends Fragment {
 
                         completedTask = documentSnapshot.getLong("completedTasks") != null ? documentSnapshot.getLong("completedTasks").intValue() : 0;
 
+                        today = documentSnapshot.getString("CurrentDate") != null ? documentSnapshot.getString("CurrentDate") : "";
+
 
                         if (completedTask >= 20) {
                             updateCompletedTaskUI();
                         } else {
                             updateUI();
                         }
-                        resetDailyDataIfNeeded(documentSnapshot.getTimestamp("lastUpdated"), toDay);
-                    }else {
+                    } else {
                         createEarningsDocument();
                     }
-                }) .addOnFailureListener(e -> Log.e("Firestore", "Error fetching data", e));
+                }).addOnFailureListener(e -> Log.e("Firestore", "Error fetching data", e));
     }
 
-    private void createEarningsDocument() {
+    public void createEarningsDocument() {
         Map<String, Object> newEarnings = new HashMap<>();
         newEarnings.put("cashTotal", 0);
         newEarnings.put("cashToday", 0);
         newEarnings.put("referTotal", 0);
         newEarnings.put("referToday", 0);
         newEarnings.put("completedTasks", 0);
-        newEarnings.put("lastUpdated", FieldValue.serverTimestamp());
-        newEarnings.put("lastResetDate", "");
+        newEarnings.put("ResetTime", FieldValue.serverTimestamp());
+        newEarnings.put("CurrentDate", binding.tvDate.getText());
+
 
         db.collection("Earnings").document(documentId).set(newEarnings)
                 .addOnSuccessListener(aVoid -> {
@@ -165,6 +153,7 @@ public class HomeFragment extends Fragment {
                 .addOnFailureListener(e -> Log.e(TAG, "Error creating earnings document", e));
     }
     private void updateCompletedTaskUI() {
+        binding.tvDate.setText("("+today+")");
         binding.tvCompletedTask.setText("Completed ✅");
         binding.tvTotalTask.setVisibility(View.GONE);
         binding.tvDailyTask.setVisibility(View.GONE);
@@ -176,11 +165,14 @@ public class HomeFragment extends Fragment {
         binding.tvTodayCashWallet.setText("Cash Wallet\nRs. " + cashWalletToday);
         binding.tvTodayReferWallet.setText("Refer Wallet\nRs. " + referWalletToday);
 
+        db.collection("Earnings").document(documentId).update("cashToday", cashWalletToday);
         Log.d(TAG, "User has completed all tasks for the day.");
 
     }
 
     private void updateUI() {
+        binding.tvDate.setText("("+today+")");
+
         binding.tvTotalCashWallet.setText("Cash Wallet\nRs. " + cashWalletTotal);
         Utils.setTotalCash(cashWalletTotal);
         binding.tvTotalCashRefer.setText("Refer Wallet\nRs. " + referWalletTotal);
@@ -190,91 +182,6 @@ public class HomeFragment extends Fragment {
 
         binding.tvCompletedTask.setText(String.valueOf(completedTask));
         binding.tvTotalTask.setVisibility(View.VISIBLE);
-    }
-
-    private void resetDailyData() {
-
-        int updatedCashTotal = cashWalletTotal + cashWalletToday;
-        int updatedReferTotal = referWalletTotal + referWalletToday;
-
-        Map<String, Object> updates = new HashMap<>();
-        updates.put("cashTotal", updatedCashTotal);
-        updates.put("cashToday", 0);
-
-        updates.put("referTotal", updatedReferTotal);
-        updates.put("referToday", 0);
-
-        updates.put("completedTasks", 0);
-        updates.put("lastUpdated", FieldValue.serverTimestamp());
-
-        db.collection("Earnings").document(documentId).update(updates)
-                .addOnSuccessListener(aVoid -> {
-                    Log.d(TAG, "Daily data reset successfully.");
-                    Utils.setTotalCash(updatedCashTotal);
-                })
-                .addOnFailureListener(e -> Log.e(TAG, "Error resetting daily data", e));
-    }
-
-    private void resetDailyDataIfNeeded(Timestamp lastUpdated, String toDay) {
-        if (lastUpdated == null || toDay == null) {
-            Log.e(TAG, "Invalid parameters for resetDailyDataIfNeeded.");
-            Log.d(TAG, "lastUpdated: " + lastUpdated);
-            Log.d(TAG, "Today's Date: " + toDay);
-            return;
-        }
-
-        db.collection("Earnings").document(documentId).get()
-                .addOnSuccessListener(documentSnapshot -> {
-                    if (documentSnapshot.exists()) {
-                        String lastResetDate = documentSnapshot.getString("lastResetDate");
-                        Log.d(TAG, "Last Reset Date: " + lastResetDate);
-                        Log.d(TAG, "Today's Date: " + toDay);
-
-                        if (lastResetDate == null || !lastResetDate.equals(toDay)) {
-                            Log.d(TAG, "Resetting daily data for a new day.");
-                            resetDailyData();
-                            updateLastResetDate(toDay);
-                        } else {
-                            Log.d(TAG, "Daily data already reset for today.");
-                        }
-                    } else {
-                        Log.e(TAG, "Document not found for resetDailyDataIfNeeded.");
-                    }
-                })
-                .addOnFailureListener(e -> Log.e(TAG, "Error fetching last reset date", e));
-    }
-
-
-    private void updateLastResetDate(String toDay) {
-        Map<String, Object> updates = new HashMap<>();
-        updates.put("lastResetDate", toDay);
-        db.collection("Earnings").document(documentId).update(updates)
-                .addOnSuccessListener(aVoid -> Log.d(TAG, "Last reset date updated successfully."))
-                .addOnFailureListener(e -> Log.e(TAG, "Error updating last reset date", e));
-    }
-
-
-    @Override
-    public void onStart() {
-        super.onStart();
-
-        Utils.getCurrentDate(new Utils.OnLastLoginFetchedListener() {
-            @Override
-            public void onLastLoginFetched(String lastLoginDate) {
-                toDay = lastLoginDate;
-                binding.tvDate.setText("(" + toDay + ")");
-                fetchDataFromFirestore();
-                setupRealTimeListener();
-            }
-
-            @Override
-            public void onError(String errorMessage) {
-                binding.tvDate.setText("");
-            }
-        });
-
-
-
     }
 
     @Override
@@ -287,4 +194,17 @@ public class HomeFragment extends Fragment {
         }
         binding = null;
     }
+
+    @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        Log.d(TAG, "onCreate called");
+    }
+
+    @Override
+    public void onStart() {
+        super.onStart();
+        Log.d(TAG, "onStart called");
+    }
+
 }

@@ -9,6 +9,7 @@ import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
 import android.text.TextUtils;
+import android.util.Log;
 import android.util.Patterns;
 import android.view.View;
 import android.widget.Button;
@@ -24,13 +25,17 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.app.AppCompatDelegate;
 
+import com.google.firebase.Timestamp;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.DocumentSnapshot;
+import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
 
+import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 
 
@@ -260,10 +265,36 @@ public class LoginActivity extends AppCompatActivity {
 
     private void updateUI(FirebaseUser user) {
         if (user != null) {
-            Utils.intend(LoginActivity.this, MainActivity.class);
-            finish();
-            showProgressBar(false);
-            loginButton.setEnabled(true);
+            FirebaseFirestore db = FirebaseFirestore.getInstance();
+            db.collection("Users")
+                    .whereEqualTo("Email", user.getEmail())
+                    .get()
+                    .addOnCompleteListener(task -> {
+                        if (task.isSuccessful() && task.getResult() != null && !task.getResult().isEmpty()) {
+                            task.getResult().forEach(documentSnapshot -> {
+                                String documentId = documentSnapshot.getId();
+                                String UsName = documentSnapshot.getString("Name");
+                                Utils.setDocumentId(documentId);
+                                Utils.setUserEmail(user.getEmail());
+                                Utils.setUserName(UsName);
+
+                                db.collection("Users").document(documentId)
+                                        .update("LastLogin", FieldValue.serverTimestamp())
+                                        .addOnSuccessListener(aVoid -> {
+                                            setTodayInFB(db, documentId);
+                                            Utils.intend(LoginActivity.this, MainActivity.class);
+                                            finish();
+                                            showProgressBar(false);
+                                            loginButton.setEnabled(true);
+                                        }).addOnFailureListener(e -> {
+                                            Utils.intend(LoginActivity.this, MainActivity.class);
+                                            finish();
+                                            showProgressBar(false);
+                                            loginButton.setEnabled(true);
+                                        });
+                            });
+                        }
+                    });
         } else {
             showProgressBar(false);
             emailEditText.setText("");
@@ -271,6 +302,30 @@ public class LoginActivity extends AppCompatActivity {
             loginButton.setEnabled(true);
         }
     }
+
+    private void setTodayInFB(FirebaseFirestore db, String documentId) {
+        db.collection("Users").document(documentId)
+                .get()
+                .addOnSuccessListener(documentSnapshot -> {
+                    if (documentSnapshot.exists()) {
+                        Timestamp lastLoginObj = documentSnapshot.getTimestamp("LastLogin");
+                        if (lastLoginObj != null) {
+                            SimpleDateFormat dateFormat = new SimpleDateFormat("dd-MMM-yyyy", Locale.getDefault());
+                            Date lastLoginDate = lastLoginObj.toDate();
+                            String formattedDate = dateFormat.format(lastLoginDate);
+                            updateFormattedDate(db, documentId, formattedDate);
+                        }
+                    }
+                })
+                .addOnFailureListener(e -> Log.d("MainActivity", "Failed to fetch user data: " + e.getMessage()));
+
+    }
+
+    private void updateFormattedDate(FirebaseFirestore db, String documentId, String formattedDate) {
+        db.collection("Earnings").document(documentId)
+                .update("CurrentDate", formattedDate);
+    }
+
 
     private void updateVerificationStatusInFirestore(String email, String passwd, boolean isVerified) {
         FirebaseFirestore db = FirebaseFirestore.getInstance();

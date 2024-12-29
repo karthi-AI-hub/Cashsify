@@ -60,4 +60,6 @@ dependencies {
 
     implementation("com.google.android.gms:play-services-ads:23.6.0")
 
+    implementation("androidx.work:work-runtime:2.9.1")
+
 }

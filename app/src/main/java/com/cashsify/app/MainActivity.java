@@ -1,10 +1,11 @@
 package com.cashsify.app;
 
+import static com.cashsify.app.Utils.getDocumentId;
 import static com.cashsify.app.Utils.showExitDialog;
 
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
@@ -13,30 +14,40 @@ import android.view.Menu;
 import android.widget.TextView;
 
 import com.google.android.gms.ads.MobileAds;
-import com.google.android.material.snackbar.Snackbar;
 import com.google.android.material.navigation.NavigationView;
 
 import androidx.appcompat.app.AppCompatDelegate;
 import androidx.core.view.GravityCompat;
 import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
+import androidx.navigation.fragment.NavHostFragment;
 import androidx.navigation.ui.AppBarConfiguration;
 import androidx.navigation.ui.NavigationUI;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.work.BackoffPolicy;
+import androidx.work.Constraints;
+import androidx.work.ExistingPeriodicWorkPolicy;
+import androidx.work.OneTimeWorkRequest;
+import androidx.work.PeriodicWorkRequest;
+import androidx.work.WorkManager;
 
 import com.cashsify.app.databinding.ActivityMainBinding;
 import com.google.firebase.Timestamp;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
-import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
+
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.Locale;
+import java.util.concurrent.TimeUnit;
 
 
 public class MainActivity extends AppCompatActivity {
 
     private TextView TvUserPhoneNumber, TvUserEmail;
-    private String documentId;
     private AppBarConfiguration mAppBarConfiguration;
     private ActivityMainBinding binding;
     private AdHelper adHelper;
@@ -44,9 +55,11 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        Log.d("MainActivity", "MainActivity OnCreate called");
         AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
+
 
         MobileAds.initialize(this, initializationStatus -> Log.d("AdLogs", "AdMob initialized."));
 
@@ -71,6 +84,52 @@ public class MainActivity extends AppCompatActivity {
         setupNavigation();
 
         adHelper = new AdHelper(this);
+        scheduleResetEarningsWorker(this);
+        checkAndResetEarnings();
+    }
+
+    public void scheduleResetEarningsWorker(Context context) {
+        FirebaseFirestore.getInstance().collection("Users").document(Utils.getDocumentId())
+                .get()
+                .addOnSuccessListener(documentSnapshot -> {
+                    Timestamp serverTimestamp = documentSnapshot.getTimestamp("LastLogin");
+                    if (serverTimestamp != null) {
+                        long nextMidnightMillis = getNextMidnightMillis(serverTimestamp);
+                        long currentTimeMillis = System.currentTimeMillis();
+                        long initialDelay = nextMidnightMillis - currentTimeMillis;
+
+                        Constraints constraints = new Constraints.Builder()
+                                .setRequiresBatteryNotLow(false)
+                                .setRequiresDeviceIdle(false)
+                                .build();
+
+                        PeriodicWorkRequest resetEarningsWork = new PeriodicWorkRequest.Builder(
+                                ResetEarningsWorker.class, 1, TimeUnit.DAYS)
+                                .setInitialDelay(initialDelay, TimeUnit.MILLISECONDS)
+                                .setConstraints(constraints)
+                                .setBackoffCriteria(BackoffPolicy.LINEAR, 1, TimeUnit.MINUTES)
+                                .build();
+
+                        WorkManager.getInstance(MainActivity.this).enqueueUniquePeriodicWork(
+                                "ResetEarningsTask",
+                                ExistingPeriodicWorkPolicy.REPLACE,
+                                resetEarningsWork
+                        );
+                        Log.d("MainActivity", "WorkManager scheduled for daily earnings reset.");
+                    }
+                })
+                .addOnFailureListener(e -> Log.e("MainActivity", "Failed to fetch server time", e));
+    }
+
+    private long getNextMidnightMillis(Timestamp serverTimestamp) {
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(serverTimestamp.toDate());
+        calendar.set(Calendar.HOUR_OF_DAY, 0);
+        calendar.set(Calendar.MINUTE, 0);
+        calendar.set(Calendar.SECOND, 0);
+        calendar.set(Calendar.MILLISECOND, 0);
+        calendar.add(Calendar.DAY_OF_MONTH, 1);
+        return calendar.getTimeInMillis();
     }
 
     public AdHelper getAdHelper() {
@@ -86,8 +145,11 @@ public class MainActivity extends AppCompatActivity {
                 .setOpenableLayout(drawer)
                 .build();
         NavController navController = Navigation.findNavController(this, R.id.nav_host_fragment_content_main);
-        NavigationUI.setupActionBarWithNavController(this, navController, mAppBarConfiguration);
-        NavigationUI.setupWithNavController(navigationView, navController);
+        if (getSupportFragmentManager().findFragmentById(R.id.nav_host_fragment_content_main) instanceof NavHostFragment) {
+            NavigationUI.setupActionBarWithNavController(this, navController, mAppBarConfiguration);
+            NavigationUI.setupWithNavController(navigationView, navController);
+        }
+
 
         navigationView.setNavigationItemSelectedListener(item -> {
             boolean handled = false;
@@ -118,29 +180,16 @@ public class MainActivity extends AppCompatActivity {
         NavigationView navigationView = binding.navView;
         View headerView = navigationView.getHeaderView(0);
 
-        TvUserPhoneNumber = headerView.findViewById(R.id.tvUserPhoneNumber);
-        TvUserEmail = headerView.findViewById(R.id.tvUserEmail);
+        TvUserPhoneNumber = headerView.findViewById(R.id.tv_UserPhoneNumber);
+        TvUserEmail = headerView.findViewById(R.id.tv_UserEmail);
 
-        TvUserEmail.setText(FirebaseAuth.getInstance().getCurrentUser().getEmail());
-        TvUserPhoneNumber.setText(documentId);
+        String documentId = Utils.getDocumentId();
+        TvUserPhoneNumber.setText(documentId != null ? documentId : "Guest");
 
         FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
-        if (currentUser != null) {
-            TvUserEmail.setText(currentUser.getEmail());
-        } else {
-            TvUserEmail.setText("Guest");
-        }
-
-        TvUserPhoneNumber.setText(documentId);
-
-        if (documentId != null && !documentId.isEmpty() && !documentId.equals("No ID Found") && currentUser != null ) {
-            SharedPreferences prefs = getSharedPreferences("UserCredits", Context.MODE_PRIVATE);
-            SharedPreferences.Editor editor = prefs.edit();
-            editor.putString("documentId", documentId);
-            editor.putString("userEmail", currentUser.getEmail());
-            editor.apply();
-        }
+        TvUserEmail.setText(currentUser != null ? Utils.getUserEmail() : "N/A");
     }
+
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -155,38 +204,62 @@ public class MainActivity extends AppCompatActivity {
                 || super.onSupportNavigateUp();
     }
 
+    private void checkAndResetEarnings() {
+        FirebaseFirestore.getInstance().collection("Earnings")
+                .document(Utils.getDocumentId())
+                .get()
+                .addOnSuccessListener(documentSnapshot -> {
+                    String CurrentDate = documentSnapshot.getString("CurrentDate") != null
+                            ? documentSnapshot.getString("CurrentDate").trim()
+                            : getCurrentDate();
+
+                    String LastResetDate = documentSnapshot.getTimestamp("ResetTime") != null
+                            ? formatDate(documentSnapshot.getTimestamp("ResetTime"))
+                            : null ;
+
+                    if (CurrentDate != null && !CurrentDate.equals(LastResetDate)) {
+                        Log.d("ResetEarningsWorker", "CurrentDate : " + CurrentDate + "\nLastResetDate : " + LastResetDate);
+                        resetEarnings();
+                    } else {
+                        Log.d("ResetEarningsWorker", "No need to reset earnings.");
+                    }
+                })
+                .addOnFailureListener(e -> Log.e("ResetEarningsWorker", "Error fetching ResetTime", e));
+    }
+
+
+    private void resetEarnings() {
+        Log.d("ResetEarningsWorker", "Earnings reset triggered.");
+        WorkManager.getInstance(this).enqueue(new OneTimeWorkRequest.Builder(ResetEarningsWorker.class).build());
+        Log.d("ResetEarningsWorker", "Reset earnings work has been enqueued.");
+
+    }
+    private String getCurrentDate() {
+        SimpleDateFormat sdf = new SimpleDateFormat("dd-MMM-yyyy", Locale.getDefault());
+        return sdf.format(new Date()).trim();
+    }
+
+    private String formatDate(Timestamp timestamp) {
+        SimpleDateFormat sdf = new SimpleDateFormat("dd-MMM-yyyy", Locale.getDefault());
+        Date date = timestamp.toDate();
+        return sdf.format(date).trim();
+    }
+
     @Override
     protected void onStart() {
         super.onStart();
-        FirebaseFirestore db = FirebaseFirestore.getInstance();
-        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
-        if (user != null) {
-            db.collection("Users")
-                    .whereEqualTo("Email", user.getEmail())
-                    .get()
-                    .addOnCompleteListener(task -> {
-                        if (task.isSuccessful() && task.getResult() != null && !task.getResult().isEmpty()) {
-                            task.getResult().forEach(documentSnapshot -> {
-                                documentId = documentSnapshot.getId();
-
-                                db.collection("Users").document(documentId)
-                                        .update("LastLogin", FieldValue.serverTimestamp());
-                            });
-                            initUI();
-                        }else{
-                            documentId = "No ID Found";
-                            initUI();
-                        }
-                    });
-        }else{
-            documentId = "User Not Logged In";
-            try{
+        Log.d("MainActivity", "MainActivity OnStart called");
+        FirebaseAuth auth = FirebaseAuth.getInstance();
+        auth.addAuthStateListener(firebaseAuth -> {
+            FirebaseUser currentUser = firebaseAuth.getCurrentUser();
+            if (currentUser != null) {
                 initUI();
-                }catch (Exception e){
-                e.printStackTrace();
+            } else {
+                Log.d("MainActivity", "User not authenticated.");
             }
-        }
+        });
     }
+
     @Override
     public void onBackPressed() {
         showExitDialog(this);

@@ -2,25 +2,14 @@
 <RelativeLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    >
+    android:layout_height="match_parent">
 
     <RelativeLayout
         android:id="@+id/rl_header"
         android:layout_width="match_parent"
         android:layout_height="50dp"
         android:background="@drawable/curved_top_background"
-        android:layout_alignParentTop="true" />
-
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_below="@+id/rl_header"
-        android:padding="16dp"
-        android:layout_marginTop="10dp"
-        android:orientation="vertical">
-
-
+        android:layout_alignParentTop="true">
         <TextView
             android:id="@+id/tv_user_balance"
             android:layout_width="wrap_content"
@@ -30,9 +19,18 @@
             android:textStyle="bold"
             android:layout_gravity="center"
             android:drawablePadding="10dp"
-            android:textColor="@color/design_default_color_primary_variant"
+            android:textColor="@color/white"
             android:drawableStart="@drawable/icon_wallet"
-            android:layout_marginBottom="16dp" />
+            android:drawableTint="@color/white"
+            android:layout_centerInParent="true"/>
+    </RelativeLayout>
+
+        <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/rl_header"
+        android:padding="16dp"
+        android:orientation="vertical">
 
         <TextView
             android:id="@+id/tv_min_withdrawal"
@@ -92,6 +90,7 @@
             android:textStyle="bold"
             android:layout_marginBottom="8dp" />
 
+
         <TextView
             android:id="@+id/tv_no_history"
             android:layout_width="match_parent"
@@ -104,6 +103,53 @@
             android:layout_marginTop="8dp"
             android:layout_marginBottom="16dp" />
 
+            <LinearLayout
+                android:visibility="gone"
+                android:id="@+id/tableHeader"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:background="@color/gray">
+
+                <TextView
+                    android:id="@+id/tvHeaderSerialNumber"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="S.No"
+                    android:textStyle="bold"
+                    android:gravity="start"
+                    android:textColor="@color/white" />
+
+                <TextView
+                    android:id="@+id/tvHeaderAmount"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="15dp"
+                    android:text="Amount"
+                    android:textStyle="bold"
+                    android:gravity="center"
+                    android:textColor="@color/white" />
+
+                <TextView
+                    android:id="@+id/tvHeaderUpiId"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:layout_height="wrap_content"
+                    android:text="UPI ID"
+                    android:textStyle="bold"
+                    android:gravity="center"
+                    android:textColor="@color/white" />
+
+                <TextView
+                    android:id="@+id/tvHeaderStatus"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Status"
+                    android:textStyle="bold"
+                    android:gravity="center"
+                    android:layout_marginEnd="20dp"
+                    android:textColor="@color/white" />
+            </LinearLayout>
         <ScrollView
             android:layout_width="match_parent"
             android:layout_height="wrap_content">
@@ -114,17 +160,15 @@
             android:layout_weight="1"
             android:layout_marginBottom="10dp" />
         </ScrollView>
-
+            <TextView
+                android:id="@+id/tv_withdraw_disclaimer"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Withdrawals are typically completed within 7 days."
+                android:textSize="14sp"
+                android:textColor="@color/red"
+                android:gravity="center"
+                android:visibility="gone"
+                android:layout_marginBottom="16dp" />
     </LinearLayout>
-    <TextView
-        android:id="@+id/tv_withdraw_disclaimer"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Withdrawals are typically completed within 7 days."
-        android:textSize="14sp"
-        android:textColor="@color/red"
-        android:gravity="center"
-        android:visibility="gone"
-        android:layout_alignParentBottom="true"
-        android:layout_marginBottom="16dp" />
 </RelativeLayout>

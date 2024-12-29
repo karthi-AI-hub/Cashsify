@@ -2,8 +2,6 @@ package com.cashsify.app;
 
 import android.animation.ObjectAnimator;
 import android.app.AlertDialog;
-import android.content.Context;
-import android.content.DialogInterface;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
@@ -21,9 +19,15 @@ import androidx.core.content.ContextCompat;
 import android.Manifest;
 import android.content.Intent;
 
+import com.google.firebase.Timestamp;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
+import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
+
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
 
 public class SplashActivity extends AppCompatActivity {
 
@@ -36,6 +40,8 @@ public class SplashActivity extends AppCompatActivity {
             Manifest.permission.POST_NOTIFICATIONS,
             Manifest.permission.VIBRATE
     };
+    String documentId;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -82,7 +88,6 @@ public class SplashActivity extends AppCompatActivity {
     }
 
     private void requestPermissions() {
-        // Check for individual permissions and explain rationale if needed
         boolean shouldShowRationale = false;
         for (String permission : REQUIRED_PERMISSIONS) {
             if (ActivityCompat.shouldShowRequestPermissionRationale(this, permission)) {
@@ -94,7 +99,6 @@ public class SplashActivity extends AppCompatActivity {
         if (shouldShowRationale) {
             showPermissionRationaleDialog();
         } else {
-            // Request permissions without rationale if it's not needed
             ActivityCompat.requestPermissions(this, REQUIRED_PERMISSIONS, PERMISSION_REQUEST_CODE);
         }
     }
@@ -175,16 +179,72 @@ public class SplashActivity extends AppCompatActivity {
         }
     }
 
+
     private void checkUser() {
-        FirebaseUser currentUser = FirebaseAuth.getInstance().getCurrentUser();
-        if (currentUser != null) {
-            Utils.intend(SplashActivity.this, MainActivity.class);
-            finish();
+        FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
+        if (user != null) {
+            FirebaseFirestore db = FirebaseFirestore.getInstance();
+            db.collection("Users")
+                    .whereEqualTo("Email", user.getEmail())
+                    .get()
+                    .addOnCompleteListener(task -> {
+                        if (task.isSuccessful() && task.getResult() != null && !task.getResult().isEmpty()) {
+                            task.getResult().forEach(documentSnapshot -> {
+                                documentId = documentSnapshot.getId();
+                                String userName = documentSnapshot.getString("Name");
+                                Utils.setDocumentId(documentId);
+                                Utils.setUserEmail(user.getEmail());
+                                Utils.setUserName(userName);
+
+                                db.collection("Users").document(documentId)
+                                        .update("LastLogin", FieldValue.serverTimestamp())
+                                        .addOnSuccessListener(aVoid -> {
+                                            setTodayInFB(db, documentId);
+                                            Utils.intend(SplashActivity.this, MainActivity.class);
+                                            finish();
+                                        })
+                                        .addOnFailureListener(e -> {
+                                            Utils.intend(SplashActivity.this, MainActivity.class);
+                                            finish();
+                                        });
+                            });
+                        } else {
+                            Log.e("SplashActivity", "User document not found or task failed.");
+                            documentId = null;
+                            Utils.intend(SplashActivity.this, LoginActivity.class);
+                            finish();
+                        }
+                    });
         } else {
             Utils.intend(SplashActivity.this, RegisterActivity.class);
             finish();
         }
     }
+
+
+    private void setTodayInFB(FirebaseFirestore db, String documentId) {
+        db.collection("Users").document(documentId)
+                .get()
+                .addOnSuccessListener(documentSnapshot -> {
+                    if (documentSnapshot.exists()) {
+                        Timestamp lastLoginObj = documentSnapshot.getTimestamp("LastLogin");
+                        if (lastLoginObj != null) {
+                            SimpleDateFormat dateFormat = new SimpleDateFormat("dd-MMM-yyyy", Locale.getDefault());
+                            Date lastLoginDate = lastLoginObj.toDate();
+                            String formattedDate = dateFormat.format(lastLoginDate);
+                            updateFormattedDate(db, documentId, formattedDate);
+                        }
+                    }
+                })
+                .addOnFailureListener(e -> Log.d("MainActivity", "Failed to fetch user data: " + e.getMessage()));
+
+    }
+
+    private void updateFormattedDate(FirebaseFirestore db, String documentId, String formattedDate) {
+        db.collection("Earnings").document(documentId)
+                .update("CurrentDate", formattedDate);
+    }
+
 
     @Override
     public void finish() {
