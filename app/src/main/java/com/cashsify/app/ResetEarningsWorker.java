@@ -2,6 +2,7 @@ package com.cashsify.app;
 
 import android.content.Context;
 import android.util.Log;
+import android.view.View;
 
 import androidx.annotation.NonNull;
 import androidx.work.Worker;
@@ -58,8 +59,9 @@ public class ResetEarningsWorker extends Worker {
                         updates.put("referToday", 0);
                         updates.put("completedTasks", 0);
                         updates.put("ResetTime", FieldValue.serverTimestamp());
+
                         db.collection("Earnings").document(documentId).update(updates)
-                                .addOnSuccessListener(aVoid -> Log.d(TAG, "Earnings reset successfully."))
+                                .addOnSuccessListener(aVoid -> {})
                                 .addOnFailureListener(e -> Log.e(TAG, "Failed to reset earnings.", e));
                     }
                 })

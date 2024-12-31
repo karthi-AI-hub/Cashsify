@@ -2,6 +2,7 @@ package com.cashsify.app;
 
 import android.animation.ObjectAnimator;
 import android.app.AlertDialog;
+import android.content.Context;
 import android.os.Bundle;
 import android.os.Handler;
 import android.util.Log;
@@ -16,6 +17,9 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.app.AppCompatDelegate;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import androidx.work.OneTimeWorkRequest;
+import androidx.work.WorkManager;
+
 import android.Manifest;
 import android.content.Intent;
 
@@ -24,10 +28,13 @@ import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.SetOptions;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Locale;
+import java.util.Map;
 
 public class SplashActivity extends AppCompatActivity {
 
@@ -66,7 +73,6 @@ public class SplashActivity extends AppCompatActivity {
         appNameText.startAnimation(slideUp);
         taglineText.startAnimation(fadeIn);
 
-        // Check permissions after animations
         new Handler().postDelayed(this::checkPermissions, SPLASH_DISPLAY_LENGTH);
     }
 
@@ -146,9 +152,9 @@ public class SplashActivity extends AppCompatActivity {
                 .setCancelable(false)
                 .show();
     }
-    
 
-        private void openAppSettings() {
+
+    private void openAppSettings() {
         Intent intent = new Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
         intent.setData(android.net.Uri.parse("package:" + getPackageName()));
         startActivity(intent);
@@ -200,8 +206,6 @@ public class SplashActivity extends AppCompatActivity {
                                         .update("LastLogin", FieldValue.serverTimestamp())
                                         .addOnSuccessListener(aVoid -> {
                                             setTodayInFB(db, documentId);
-                                            Utils.intend(SplashActivity.this, MainActivity.class);
-                                            finish();
                                         })
                                         .addOnFailureListener(e -> {
                                             Utils.intend(SplashActivity.this, MainActivity.class);
@@ -241,8 +245,14 @@ public class SplashActivity extends AppCompatActivity {
     }
 
     private void updateFormattedDate(FirebaseFirestore db, String documentId, String formattedDate) {
+        Map<String, Object> data = new HashMap<>();
+        data.put("CurrentDate", formattedDate);
         db.collection("Earnings").document(documentId)
-                .update("CurrentDate", formattedDate);
+                .set(data, SetOptions.merge()).addOnCompleteListener(task -> {
+                    if(task.isSuccessful()){
+                        checkAndResetEarnings(this);
+                    }
+                });
     }
 
 
@@ -250,5 +260,48 @@ public class SplashActivity extends AppCompatActivity {
     public void finish() {
         super.finish();
         overridePendingTransition(android.R.anim.fade_in, android.R.anim.fade_out);
+    }
+
+
+    public void checkAndResetEarnings(Context context) {
+        FirebaseFirestore.getInstance().collection("Earnings")
+                .document(Utils.getDocumentId())
+                .get()
+                .addOnSuccessListener(documentSnapshot -> {
+                    String CurrentDate = documentSnapshot.getString("CurrentDate") != null
+                            ? documentSnapshot.getString("CurrentDate").trim()
+                            : getCurrentDate();
+
+                    String LastResetDate = documentSnapshot.getTimestamp("ResetTime") != null
+                            ? formatDate(documentSnapshot.getTimestamp("ResetTime"))
+                            : null;
+
+                    if (!CurrentDate.equals(LastResetDate)) {
+                        resetEarnings(context);
+                    } else {
+                        Utils.intend(SplashActivity.this, MainActivity.class);
+                        finish();
+                        Log.d("ResetEarningsWorker", "No need to reset earnings.");
+                    }
+                })
+                .addOnFailureListener(e -> Log.e("ResetEarningsWorker", "Error fetching ResetTime", e));
+    }
+
+
+    public void resetEarnings(Context context) {
+        WorkManager.getInstance(context).enqueue(new OneTimeWorkRequest.Builder(ResetEarningsWorker.class).build());
+        Utils.intend(SplashActivity.this, MainActivity.class);
+        finish();
+    }
+
+    public static String getCurrentDate() {
+        SimpleDateFormat sdf = new SimpleDateFormat("dd-MMM-yyyy", Locale.getDefault());
+        return sdf.format(new Date()).trim();
+    }
+
+    public static String formatDate(Timestamp timestamp) {
+        SimpleDateFormat sdf = new SimpleDateFormat("dd-MMM-yyyy", Locale.getDefault());
+        Date date = timestamp.toDate();
+        return sdf.format(date).trim();
     }
 }

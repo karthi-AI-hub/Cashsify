@@ -35,7 +35,7 @@ import java.util.Map;
 public class HomeFragment extends Fragment {
 
     private final String TAG = "HomeFragment";
-    public FragmentHomeBinding binding;
+    public static FragmentHomeBinding binding;
     private int cashWalletTotal = 0;
     private int referWalletTotal = 0;
     private int cashWalletToday = 0;
@@ -48,7 +48,6 @@ public class HomeFragment extends Fragment {
 
     public View onCreateView(@NonNull LayoutInflater inflater,
                              ViewGroup container, Bundle savedInstanceState) {
-        Log.d(TAG, "onCreateView called");
         binding = FragmentHomeBinding.inflate(inflater, container, false);
         View root = binding.getRoot();
 
@@ -166,8 +165,6 @@ public class HomeFragment extends Fragment {
         binding.tvTodayReferWallet.setText("Refer Wallet\nRs. " + referWalletToday);
 
         db.collection("Earnings").document(documentId).update("cashToday", cashWalletToday);
-        Log.d(TAG, "User has completed all tasks for the day.");
-
     }
 
     private void updateUI() {
@@ -198,13 +195,11 @@ public class HomeFragment extends Fragment {
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        Log.d(TAG, "onCreate called");
     }
 
     @Override
     public void onStart() {
         super.onStart();
-        Log.d(TAG, "onStart called");
     }
 
 }

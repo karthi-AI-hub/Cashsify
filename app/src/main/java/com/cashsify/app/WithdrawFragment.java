@@ -1,14 +1,18 @@
 package com.cashsify.app;
 
+import android.app.AlertDialog;
 import android.os.Bundle;
 import android.text.TextUtils;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.WindowManager;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
 import androidx.fragment.app.Fragment;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
@@ -48,6 +52,11 @@ public class WithdrawFragment extends Fragment {
     }
 
     private void handleWithdrawal() {
+        if (requireActivity() instanceof AppCompatActivity) {
+            Utils.HideKeyboard((AppCompatActivity) requireActivity(), binding.getRoot());
+        } else {
+            throw new IllegalStateException("Hosting activity is not an AppCompatActivity");
+        }
         String amountStr = binding.etWithdrawAmount.getText().toString().trim();
         String upiId = binding.etUpiId.getText().toString().trim();
 
@@ -78,9 +87,42 @@ public class WithdrawFragment extends Fragment {
             Utils.showToast(requireContext(), "Insufficient balance");
             return;
         }
-
-        processUpiWithdrawal(amount, upiId);
+        WithdrawalStatus(amount, upiId);
     }
+
+
+    private void WithdrawalStatus(int amount, String upiId) {
+        db.collection("AppSettings").document("WithdrawSettings")
+                .get()
+                .addOnSuccessListener(documentSnapshot -> {
+                    boolean status = documentSnapshot.getBoolean("Status") != null && documentSnapshot.getBoolean("Status");
+                    if (status) {
+                        processUpiWithdrawal(amount, upiId);
+                    } else {
+                        showMaintenanceDialog();
+                    }
+                })
+                .addOnFailureListener(e -> showMaintenanceDialog());
+    }
+
+    private void showMaintenanceDialog() {
+        AlertDialog.Builder builder = new AlertDialog.Builder(requireContext());
+        LayoutInflater inflater = getLayoutInflater();
+        View dialogView = inflater.inflate(R.layout.withdraw_maintanance, null);
+        builder.setView(dialogView);
+        builder.setCancelable(true);
+        AlertDialog dialog = builder.create();
+        dialog.show();
+
+        if (dialog.getWindow() != null) {
+            WindowManager.LayoutParams params = dialog.getWindow().getAttributes();
+            params.width = ViewGroup.LayoutParams.MATCH_PARENT;
+            params.height = (int) (getResources().getDisplayMetrics().heightPixels * 0.5);
+            params.gravity = Gravity.CENTER;
+            dialog.getWindow().setAttributes(params);
+        }
+    }
+
 
     private void processUpiWithdrawal(int amount, String upiId) {
         binding.etUpiId.setText("");
@@ -98,8 +140,6 @@ public class WithdrawFragment extends Fragment {
 
 
         storeWithdrawalInFirestore(amount, upiId);
-
-        Utils.showToast(requireContext(), "Withdrawal of ₹" + amount + " successful!");
     }
 
     private void storeWithdrawalInFirestore(double amount, String upiId) {

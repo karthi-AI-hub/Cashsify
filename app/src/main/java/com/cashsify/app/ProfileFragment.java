@@ -6,6 +6,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.text.InputType;
 import android.text.TextUtils;
+import android.util.Log;
 import android.util.Patterns;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -27,6 +28,8 @@ import com.google.firebase.firestore.DocumentReference;
 import com.google.firebase.firestore.FirebaseFirestore;
 import com.google.firebase.firestore.WriteBatch;
 
+import java.util.concurrent.CountDownLatch;
+
 public class ProfileFragment extends Fragment {
 
 
@@ -46,7 +49,7 @@ public class ProfileFragment extends Fragment {
     private void initUI() {
         binding.tvUserEmail.setText(Utils.getUserEmail());
         binding.tvUserPhone.setText(Utils.getDocumentId());
-        binding.tvUserName.setText(Utils.getUserName());
+        binding.tvUserName.setText(Utils.getUserName() !=null ? Utils.getUserName() : "N/A");
     }
 
     private void setUpActions() {
@@ -98,35 +101,48 @@ public class ProfileFragment extends Fragment {
         DocumentReference oldEarningsRef = db.collection("Earnings").document(oldPhoneNumber);
         DocumentReference newEarningsRef = db.collection("Earnings").document(newPhoneNumber);
 
+        DocumentReference oldPaymenttRef = db.collection("Payments").document(oldPhoneNumber);
+        DocumentReference newPaymentRef = db.collection("Payments").document(newPhoneNumber);
+
         oldUserRef.get().addOnSuccessListener(documentSnapshot -> {
             if (documentSnapshot.exists()) {
                 batch.set(newUserRef, documentSnapshot.getData());
                 batch.delete(oldUserRef);
+
                 oldEarningsRef.get().addOnSuccessListener(earningsSnapshot -> {
                     if (earningsSnapshot.exists()) {
                         batch.set(newEarningsRef, earningsSnapshot.getData());
                         batch.delete(oldEarningsRef);
-                        batch.commit()
-                                .addOnSuccessListener(aVoid -> {
-                                    Utils.setDocumentId(newPhoneNumber);
-                                    showProgressBar(false);
-                                    Utils.showToast(requireActivity(), "Phone Number Updated Successfully");
-                                    new Handler(Looper.getMainLooper()).postDelayed(() -> {
 
-                                        new AlertDialog.Builder(requireActivity())
-                                                .setTitle("Log In Required")
-                                                .setMessage("Your phone number has been updated. Please log in again to continue.")
-                                                .setCancelable(false)
-                                                .setPositiveButton("OK", (dialog, which) -> {
-                                                    Intent intent = new Intent(requireActivity(), LoginActivity.class);
-                                                    intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-                                                    startActivity(intent);
-                                                    requireActivity().finish();
-                                                })
-                                                .show();
-                                    }, 500);
-                                })
-                                .addOnFailureListener(e -> showProgressBar(false));
+                        oldPaymenttRef.get().addOnSuccessListener(paymentSnapshot -> {
+                            if (paymentSnapshot.exists()) {
+                                batch.set(newPaymentRef, paymentSnapshot.getData());
+                                batch.delete(oldPaymenttRef);
+                                batch.commit()
+                                        .addOnSuccessListener(aVoid -> {
+                                            Utils.setDocumentId(newPhoneNumber);
+                                            showProgressBar(false);
+                                            Utils.showToast(requireActivity(), "Phone Number Updated Successfully");
+                                            new Handler(Looper.getMainLooper()).postDelayed(() -> {
+
+                                                new AlertDialog.Builder(requireActivity())
+                                                        .setTitle("Log In Required")
+                                                        .setMessage("Your phone number has been updated. Please log in again to continue.")
+                                                        .setCancelable(false)
+                                                        .setPositiveButton("OK", (dialog, which) -> {
+                                                            Intent intent = new Intent(requireActivity(), LoginActivity.class);
+                                                            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                                                            startActivity(intent);
+                                                            requireActivity().finish();
+                                                        })
+                                                        .show();
+                                            }, 500);
+                                        })
+                                        .addOnFailureListener(e -> showProgressBar(false));
+                            } else {
+                                showProgressBar(false);
+                            }
+                        }).addOnFailureListener(e -> showProgressBar(false));
                     } else {
                         showProgressBar(false);
                     }
@@ -139,27 +155,83 @@ public class ProfileFragment extends Fragment {
 
     private void showDeleteConfirmationDialog() {
         new AlertDialog.Builder(getContext())
-                .setTitle("Delete User")
+                .setTitle("Delete Account")
                 .setIcon(android.R.drawable.ic_menu_delete)
-                .setMessage("Are you sure you want to permanently delete your account? This action cannot be undone.")
+                .setMessage("Are you sure you want to permanently delete your account? This action cannot be undone. Your Earning and Payments will also be deleted.")
                 .setPositiveButton("Yes", (dialog, which) -> deleteUser())
-                .setNegativeButton("No", (dialog, which) -> dialog.dismiss())  // No action on "No"
+                .setNegativeButton("No", (dialog, which) -> dialog.dismiss())
                 .show();
+    }
+
+
+    private void promptForPassword(PasswordCallback callback) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(requireContext());
+        builder.setTitle("Delete Account");
+        builder.setIcon(android.R.drawable.ic_lock_idle_lock);
+        final EditText passwordInput = new EditText(requireContext());
+        passwordInput.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
+        passwordInput.setHint("Enter Your Password");
+        builder.setView(passwordInput);
+
+        builder.setPositiveButton("Submit", (dialog, which) -> {
+            String password = passwordInput.getText().toString();
+            if (callback != null) {
+                callback.onPasswordEntered(password);
+            }
+        });
+
+        builder.setNegativeButton("Cancel", (dialog, which) -> {
+            if (callback != null) {
+                callback.onPasswordEntered(null);
+            }
+            dialog.dismiss();
+        });
+
+        builder.setCancelable(false);
+        builder.show();
+    }
+
+    interface PasswordCallback {
+        void onPasswordEntered(String password);
     }
     private void deleteUser() {
         FirebaseUser user = FirebaseAuth.getInstance().getCurrentUser();
         if (user != null) {
-            user.delete()
-                    .addOnSuccessListener(aVoid -> {
-                        deleteUserFromFirestore();
-                    })
-                    .addOnFailureListener(e -> {
-                        Utils.showToast(requireContext(), "Failed to delete user. Please try again later.");
-                    });
+            promptForPassword(password -> {
+                if (password == null || password.isEmpty()) {
+                    Utils.showToast(requireContext(), "Enter Valid Password.");
+                    return;
+                }
+                String email = user.getEmail();
+                if (email == null) {
+                    Utils.showToast(requireContext(), "Unable to Delete account.");
+                    return;
+                }
+                AuthCredential credential = EmailAuthProvider.getCredential(email, password);
+                showProgressBar(true);
+                user.reauthenticate(credential)
+                        .addOnSuccessListener(authResult -> {
+                            user.delete()
+                                    .addOnSuccessListener(aVoid -> {
+                                        deleteUserFromFirestore();
+                                    })
+                                    .addOnFailureListener(e -> {
+                                        showProgressBar(false);
+                                        Utils.showToast(requireContext(), "Failed to delete user. Please try again later.");
+                                        Log.e("Firestore", "Failed to delete user. Please try again later : ", e);
+                                    });
+                        })
+                        .addOnFailureListener(e -> {
+                            showProgressBar(false);
+                            Utils.showToast(requireContext(), "Incorrect Password, Try again with correct password.");
+                            Log.e("Firestore", "Failed to reauthenticate user: ", e);
+                        });
+            });
         } else {
             Utils.showToast(requireContext(), "Something went wrong. Please try again later.");
         }
     }
+
     private void deleteUserFromFirestore() {
         String documentId = Utils.getDocumentId();
         if (documentId != null) {
@@ -170,18 +242,29 @@ public class ProfileFragment extends Fragment {
                         db.collection("Earnings").document(documentId)
                                 .delete()
                                 .addOnSuccessListener(aVoid1 -> {
-                                    Utils.showToast(requireActivity(), "User deleted successfully.");
-                                    Utils.intend(requireActivity(), LoginActivity.class);
+                                    db.collection("Payments").document(documentId)
+                                                    .delete()
+                                                            .addOnSuccessListener(aVoid2 -> {
+                                                                showProgressBar(false);
+                                                                Utils.showToast(requireActivity(), "User deleted successfully.");
+                                                                Utils.intend(requireActivity(), LoginActivity.class);
+                                                            });
                                 })
                                 .addOnFailureListener(e -> {
+                                    showProgressBar(false);
                                     Utils.showToast(requireActivity(), "Something went wrong. Please try again later.");
+                                    Log.e("Firestore", "Something went wrong. Please try again later : ", e);
                                 });
                     })
              .addOnFailureListener(e -> {
-                Utils.showToast(requireActivity(), "Something went wrong. Please try again later.");
-            });
+                 showProgressBar(false);
+                 Utils.showToast(requireActivity(), "Something went wrong.");
+                 Log.e("Firestore", "Something went wrong : ", e);
+
+             });
         } else {
-            Utils.showToast(requireActivity(), "Something went wrong. Please try again later.");
+            showProgressBar(false);
+            Utils.showToast(requireActivity(), "Something went wrong. Try again later.");
         }
     }
 
@@ -285,18 +368,15 @@ public class ProfileFragment extends Fragment {
         AlertDialog.Builder builder = new AlertDialog.Builder(requireContext());
         builder.setTitle("Update Password");
         builder.setIcon(android.R.drawable.ic_lock_idle_lock);
-        // LinearLayout for multiple input fields
         LinearLayout layout = new LinearLayout(requireContext());
         layout.setOrientation(LinearLayout.VERTICAL);
         layout.setPadding(50, 40, 50, 10);
 
-        // Input for current password
         final EditText currentPasswordInput = new EditText(requireContext());
         currentPasswordInput.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
         currentPasswordInput.setHint("Enter current password");
         layout.addView(currentPasswordInput);
 
-        // Input for new password
         final EditText newPasswordInput = new EditText(requireContext());
         newPasswordInput.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD);
         newPasswordInput.setHint("Enter new password");

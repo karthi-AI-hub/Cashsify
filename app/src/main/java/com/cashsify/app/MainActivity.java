@@ -55,7 +55,6 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        Log.d("MainActivity", "MainActivity OnCreate called");
         AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
@@ -85,11 +84,30 @@ public class MainActivity extends AppCompatActivity {
 
         adHelper = new AdHelper(this);
         scheduleResetEarningsWorker(this);
-        checkAndResetEarnings();
+
     }
 
     public void scheduleResetEarningsWorker(Context context) {
-        FirebaseFirestore.getInstance().collection("Users").document(Utils.getDocumentId())
+        FirebaseFirestore db = FirebaseFirestore.getInstance();
+        String userEmail = FirebaseAuth.getInstance().getCurrentUser().getEmail();
+
+        if (db == null || userEmail == null) {
+            return;
+        }
+        db.collection("Users").whereEqualTo("Email", userEmail).get()
+                .addOnCompleteListener(task -> {
+                    if (task.isSuccessful() && task.getResult() != null && !task.getResult().isEmpty()) {
+                        task.getResult().forEach(documentSnapshot -> {
+                            String documentId = documentSnapshot.getId();
+                            Utils.setDocumentId(documentId);
+                            scheule(db, documentId);
+                        });
+                    }
+                });
+    }
+
+    private void scheule(FirebaseFirestore db, String documentId) {
+        db.collection("Users").document()
                 .get()
                 .addOnSuccessListener(documentSnapshot -> {
                     Timestamp serverTimestamp = documentSnapshot.getTimestamp("LastLogin");
@@ -97,7 +115,6 @@ public class MainActivity extends AppCompatActivity {
                         long nextMidnightMillis = getNextMidnightMillis(serverTimestamp);
                         long currentTimeMillis = System.currentTimeMillis();
                         long initialDelay = nextMidnightMillis - currentTimeMillis;
-
                         Constraints constraints = new Constraints.Builder()
                                 .setRequiresBatteryNotLow(false)
                                 .setRequiresDeviceIdle(false)
@@ -115,7 +132,6 @@ public class MainActivity extends AppCompatActivity {
                                 ExistingPeriodicWorkPolicy.REPLACE,
                                 resetEarningsWork
                         );
-                        Log.d("MainActivity", "WorkManager scheduled for daily earnings reset.");
                     }
                 })
                 .addOnFailureListener(e -> Log.e("MainActivity", "Failed to fetch server time", e));
@@ -204,58 +220,17 @@ public class MainActivity extends AppCompatActivity {
                 || super.onSupportNavigateUp();
     }
 
-    private void checkAndResetEarnings() {
-        FirebaseFirestore.getInstance().collection("Earnings")
-                .document(Utils.getDocumentId())
-                .get()
-                .addOnSuccessListener(documentSnapshot -> {
-                    String CurrentDate = documentSnapshot.getString("CurrentDate") != null
-                            ? documentSnapshot.getString("CurrentDate").trim()
-                            : getCurrentDate();
 
-                    String LastResetDate = documentSnapshot.getTimestamp("ResetTime") != null
-                            ? formatDate(documentSnapshot.getTimestamp("ResetTime"))
-                            : null ;
-
-                    if (CurrentDate != null && !CurrentDate.equals(LastResetDate)) {
-                        Log.d("ResetEarningsWorker", "CurrentDate : " + CurrentDate + "\nLastResetDate : " + LastResetDate);
-                        resetEarnings();
-                    } else {
-                        Log.d("ResetEarningsWorker", "No need to reset earnings.");
-                    }
-                })
-                .addOnFailureListener(e -> Log.e("ResetEarningsWorker", "Error fetching ResetTime", e));
-    }
-
-
-    private void resetEarnings() {
-        Log.d("ResetEarningsWorker", "Earnings reset triggered.");
-        WorkManager.getInstance(this).enqueue(new OneTimeWorkRequest.Builder(ResetEarningsWorker.class).build());
-        Log.d("ResetEarningsWorker", "Reset earnings work has been enqueued.");
-
-    }
-    private String getCurrentDate() {
-        SimpleDateFormat sdf = new SimpleDateFormat("dd-MMM-yyyy", Locale.getDefault());
-        return sdf.format(new Date()).trim();
-    }
-
-    private String formatDate(Timestamp timestamp) {
-        SimpleDateFormat sdf = new SimpleDateFormat("dd-MMM-yyyy", Locale.getDefault());
-        Date date = timestamp.toDate();
-        return sdf.format(date).trim();
-    }
 
     @Override
     protected void onStart() {
         super.onStart();
-        Log.d("MainActivity", "MainActivity OnStart called");
         FirebaseAuth auth = FirebaseAuth.getInstance();
         auth.addAuthStateListener(firebaseAuth -> {
             FirebaseUser currentUser = firebaseAuth.getCurrentUser();
             if (currentUser != null) {
                 initUI();
             } else {
-                Log.d("MainActivity", "User not authenticated.");
             }
         });
     }

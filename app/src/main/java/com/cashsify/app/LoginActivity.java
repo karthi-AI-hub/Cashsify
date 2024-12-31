@@ -24,6 +24,8 @@ import androidx.activity.OnBackPressedCallback;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.app.AppCompatDelegate;
+import androidx.work.OneTimeWorkRequest;
+import androidx.work.WorkManager;
 
 import com.google.firebase.Timestamp;
 import com.google.firebase.auth.FirebaseAuth;
@@ -31,12 +33,14 @@ import com.google.firebase.auth.FirebaseUser;
 import com.google.firebase.firestore.DocumentSnapshot;
 import com.google.firebase.firestore.FieldValue;
 import com.google.firebase.firestore.FirebaseFirestore;
+import com.google.firebase.firestore.SetOptions;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 
 
 public class LoginActivity extends AppCompatActivity {
@@ -282,15 +286,10 @@ public class LoginActivity extends AppCompatActivity {
                                         .update("LastLogin", FieldValue.serverTimestamp())
                                         .addOnSuccessListener(aVoid -> {
                                             setTodayInFB(db, documentId);
-                                            Utils.intend(LoginActivity.this, MainActivity.class);
-                                            finish();
-                                            showProgressBar(false);
                                             loginButton.setEnabled(true);
                                         }).addOnFailureListener(e -> {
-                                            Utils.intend(LoginActivity.this, MainActivity.class);
-                                            finish();
-                                            showProgressBar(false);
                                             loginButton.setEnabled(true);
+                                            showToast(LoginActivity.this, "Something went wrong. Please try again.");
                                         });
                             });
                         }
@@ -314,19 +313,75 @@ public class LoginActivity extends AppCompatActivity {
                             Date lastLoginDate = lastLoginObj.toDate();
                             String formattedDate = dateFormat.format(lastLoginDate);
                             updateFormattedDate(db, documentId, formattedDate);
+                        }else{
+                            showProgressBar(false);
                         }
                     }
                 })
-                .addOnFailureListener(e -> Log.d("MainActivity", "Failed to fetch user data: " + e.getMessage()));
+                .addOnFailureListener(e -> {
+                    Log.d("MainActivity", "Failed to fetch user data: " + e.getMessage());
+                    showProgressBar(false);
+                });
 
     }
 
     private void updateFormattedDate(FirebaseFirestore db, String documentId, String formattedDate) {
+        Map<String, Object> data = new HashMap<>();
+        data.put("CurrentDate", formattedDate);
         db.collection("Earnings").document(documentId)
-                .update("CurrentDate", formattedDate);
+                .set(data, SetOptions.merge()).addOnCompleteListener(task -> {
+                    if (task.isSuccessful()) {
+                        checkAndResetEarnings(this, documentId);
+                    }else{
+                        showProgressBar(false);
+                    }
+                })
+                .addOnFailureListener(v -> showProgressBar(false));
+    }
+    public void checkAndResetEarnings(Context context, String documentId) {
+        FirebaseFirestore.getInstance().collection("Earnings")
+                .document(documentId)
+                .get()
+                .addOnSuccessListener(documentSnapshot -> {
+                    String CurrentDate = documentSnapshot.getString("CurrentDate") != null
+                            ? documentSnapshot.getString("CurrentDate").trim()
+                            : getCurrentDate();
+
+                    String LastResetDate = documentSnapshot.getTimestamp("ResetTime") != null
+                            ? formatDate(documentSnapshot.getTimestamp("ResetTime"))
+                            : null;
+
+                    if (!CurrentDate.equals(LastResetDate)) {
+                        resetEarnings(context);
+                    } else {
+                        showProgressBar(false);
+                        Log.d("ResetEarningsWorker", "No need to reset earnings.");
+                        Utils.intend(LoginActivity.this, MainActivity.class);
+                        finish();
+                    }
+                })
+                .addOnFailureListener(e -> {
+                    Log.e("ResetEarningsWorker", "Error fetching ResetTime", e);
+                    showProgressBar(false);
+                });
+    }
+    public void resetEarnings(Context context) {
+        showProgressBar(false);
+        WorkManager.getInstance(context).enqueue(new OneTimeWorkRequest.Builder(ResetEarningsWorker.class).build());
+        Utils.intend(LoginActivity.this, MainActivity.class);
+        finish();
     }
 
+    public static String getCurrentDate() {
+        SimpleDateFormat sdf = new SimpleDateFormat("dd-MMM-yyyy", Locale.getDefault());
+        return sdf.format(new Date()).trim();
+    }
 
+    public static String formatDate(Timestamp timestamp) {
+        SimpleDateFormat sdf = new SimpleDateFormat("dd-MMM-yyyy", Locale.getDefault());
+        Date date = timestamp.toDate();
+        return sdf.format(date).trim();
+    }
     private void updateVerificationStatusInFirestore(String email, String passwd, boolean isVerified) {
         FirebaseFirestore db = FirebaseFirestore.getInstance();
 

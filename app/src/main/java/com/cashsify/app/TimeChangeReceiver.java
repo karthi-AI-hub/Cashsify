@@ -9,7 +9,6 @@ public class TimeChangeReceiver extends BroadcastReceiver {
     public void onReceive(Context context, Intent intent) {
         if (Intent.ACTION_TIME_CHANGED.equals(intent.getAction()) ||
                 Intent.ACTION_DATE_CHANGED.equals(intent.getAction())) {
-            // Schedule the earnings reset
             scheduleResetEarningsWorker(context);
         }
     }
